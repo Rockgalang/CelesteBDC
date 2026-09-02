@@ -7,6 +7,7 @@ export const DOCUMENT_CATEGORIES = [
   "permit",
   "engagement_letter",
   "financial_statement",
+  "payment_proof",
   "other",
 ] as const;
 

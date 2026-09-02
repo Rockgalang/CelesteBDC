@@ -16,7 +16,7 @@ const SIGNED_URL_TTL_SECONDS = 15 * 60; // 15 minutes, per build spec §2.3
 
 export async function uploadDocumentAction(
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<ActionResult & { documentId?: string }> {
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, error: "Choose a file to upload." };
@@ -52,31 +52,36 @@ export async function uploadDocumentAction(
     return { ok: false, error: `Upload failed: ${uploadError.message}` };
   }
 
-  const { error: insertError } = await supabase.from("documents").insert({
-    client_id: parsed.data.clientId,
-    category: parsed.data.category,
-    filename: file.name,
-    storage_path: storagePath,
-    mime: file.type || "application/octet-stream",
-    bytes: file.size,
-    sha256,
-    source: "portal",
-    issued_date: parsed.data.issuedDate ?? null,
-    expires_at: parsed.data.expiresAt ?? null,
-  });
-  if (insertError) {
+  const { data: document, error: insertError } = await supabase
+    .from("documents")
+    .insert({
+      client_id: parsed.data.clientId,
+      category: parsed.data.category,
+      filename: file.name,
+      storage_path: storagePath,
+      mime: file.type || "application/octet-stream",
+      bytes: file.size,
+      sha256,
+      source: "portal",
+      issued_date: parsed.data.issuedDate ?? null,
+      expires_at: parsed.data.expiresAt ?? null,
+    })
+    .select("id")
+    .single();
+  if (insertError || !document) {
     // Row insert failed after the file landed in storage (e.g. RLS
     // rejected the client_id) — remove the orphaned object rather than
     // leaving storage and the documents table out of sync.
     await supabase.storage.from(BUCKET).remove([storagePath]);
     return {
       ok: false,
-      error: `Could not save document record: ${insertError.message}`,
+      error: `Could not save document record: ${insertError?.message ?? "unknown error"}`,
     };
   }
 
   revalidatePath(`/clients/${parsed.data.clientId}`);
-  return { ok: true };
+  revalidatePath("/documents");
+  return { ok: true, documentId: document.id };
 }
 
 export async function getSignedDocumentUrlAction(

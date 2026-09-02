@@ -20,6 +20,7 @@
     "@hookform/resolvers": "^3.10.0",
     "decimal.js": "^10.4.3",
     "server-only": "^0.0.1",
+    "resend": "^6.25.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.6.0",
     "class-variance-authority": "^0.7.1",

@@ -1,5 +1,12 @@
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboardIcon, UsersIcon } from "lucide-react";
+import {
+  FileTextIcon,
+  LayoutDashboardIcon,
+  MailIcon,
+  ReceiptIcon,
+  UsersIcon,
+  WorkflowIcon,
+} from "lucide-react";
 
 import type { UserRole } from "@/lib/supabase/types";
 
@@ -22,6 +29,30 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Clients",
     icon: UsersIcon,
     roles: ["owner", "staff"],
+  },
+  {
+    href: "/registrations",
+    label: "Registrations",
+    icon: WorkflowIcon,
+    roles: ["owner", "staff"],
+  },
+  {
+    href: "/invoices",
+    label: "Invoices",
+    icon: ReceiptIcon,
+    roles: ["owner", "staff", "client_admin"],
+  },
+  {
+    href: "/documents",
+    label: "Documents",
+    icon: FileTextIcon,
+    roles: ["client_admin", "client_user"],
+  },
+  {
+    href: "/settings/email-templates",
+    label: "Email templates",
+    icon: MailIcon,
+    roles: ["owner"],
   },
 ];
 

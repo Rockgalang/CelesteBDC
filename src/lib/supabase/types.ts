@@ -25,6 +25,42 @@ export type FsFrequency = "quarterly" | "monthly";
 
 export type DocumentSource = "portal" | "internal" | "generated";
 
+export type JobType =
+  | "dti"
+  | "sec"
+  | "lgu_barangay"
+  | "lgu_mayors_permit"
+  | "lgu_zoning"
+  | "lgu_sanitary"
+  | "lgu_fire"
+  | "bir_registration"
+  | "bir_atp"
+  | "bir_books"
+  | "sec_gis";
+
+export type JobStatus =
+  "not_started" | "in_progress" | "blocked" | "completed" | "cancelled";
+export type StageStatus = "pending" | "in_progress" | "completed" | "skipped";
+
+export type SubscriptionCycle = "monthly" | "annual";
+export type SubscriptionStatus = "active" | "grace" | "suspended" | "cancelled";
+export type InvoiceStatus =
+  "draft" | "issued" | "partially_paid" | "paid" | "overdue" | "void";
+export type InvoiceLineKind =
+  | "subscription"
+  | "txn_overage"
+  | "employee_overage"
+  | "govt_fee"
+  | "handling_fee"
+  | "one_time"
+  | "adjustment";
+export type PaymentMethod = "gcash" | "bank_transfer" | "cash" | "other";
+export type PaymentStatus = "submitted" | "confirmed" | "rejected";
+
+export type NotificationChannel = "email" | "sms";
+export type TaskStatus = "open" | "in_progress" | "done" | "cancelled";
+export type TaskPriority = "low" | "normal" | "high" | "urgent";
+
 export type ClientsRow = {
   id: string;
   business_name: string;
@@ -127,6 +163,201 @@ export type DocumentsRow = {
   created_by: string | null;
 };
 
+export type JobStageTemplatesRow = {
+  id: string;
+  job_type: JobType;
+  name: string;
+  sequence: number;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type JobChecklistTemplatesRow = {
+  id: string;
+  job_type: JobType;
+  label: string;
+  required: boolean;
+  sequence: number;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type RegistrationJobsRow = {
+  id: string;
+  client_id: string;
+  job_type: JobType;
+  is_renewal: boolean;
+  status: JobStatus;
+  current_stage: string | null;
+  target_date: string | null;
+  completed_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type JobStagesRow = {
+  id: string;
+  job_id: string;
+  name: string;
+  sequence: number;
+  status: StageStatus;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type JobChecklistItemsRow = {
+  id: string;
+  job_id: string;
+  label: string;
+  required: boolean;
+  satisfied_by_document_id: string | null;
+  satisfied_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type GovernmentFeesRow = {
+  id: string;
+  job_id: string;
+  agency: string;
+  description: string;
+  amount_at_cost: string;
+  handling_fee: string;
+  receipt_document_id: string | null;
+  billed_invoice_id: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type SubscriptionsRow = {
+  id: string;
+  client_id: string;
+  plan_id: string;
+  cycle: SubscriptionCycle;
+  started_at: string;
+  current_period_start: string;
+  current_period_end: string;
+  price_locked_until: string | null;
+  locked_price: string | null;
+  status: SubscriptionStatus;
+  cancel_notice_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type InvoicesRow = {
+  id: string;
+  client_id: string;
+  subscription_id: string | null;
+  number: string | null;
+  issue_date: string;
+  due_date: string;
+  period_start: string | null;
+  period_end: string | null;
+  subtotal: string;
+  total: string;
+  status: InvoiceStatus;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type InvoiceLinesRow = {
+  id: string;
+  invoice_id: string;
+  kind: InvoiceLineKind;
+  description: string;
+  qty: string;
+  unit_price: string;
+  amount: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type PaymentsRow = {
+  id: string;
+  invoice_id: string;
+  amount: string;
+  method: PaymentMethod;
+  reference: string | null;
+  paid_at: string | null;
+  proof_document_id: string | null;
+  status: PaymentStatus;
+  confirmed_by: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type EngagementLettersRow = {
+  id: string;
+  client_id: string;
+  document_id: string | null;
+  template_version: string;
+  signed_by_name: string;
+  signed_by_profile_id: string | null;
+  ip: string | null;
+  user_agent: string | null;
+  signed_at: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type NotificationDeliveryStatus = "pending" | "sent" | "failed";
+
+export type NotificationsRow = {
+  id: string;
+  recipient_profile_id: string;
+  channel: NotificationChannel;
+  template: string;
+  payload: Record<string, unknown>;
+  scheduled_for: string;
+  sent_at: string | null;
+  read_at: string | null;
+  delivery_status: NotificationDeliveryStatus;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type EmailTemplatesRow = {
+  key: string;
+  subject: string;
+  body_text: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type TasksRow = {
+  id: string;
+  client_id: string | null;
+  title: string;
+  kind: string;
+  due_at: string | null;
+  priority: TaskPriority;
+  assigned_to: string | null;
+  status: TaskStatus;
+  source_type: string | null;
+  source_id: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
 export type AuditLogRow = {
   id: string;
   actor_profile_id: string | null;
@@ -194,6 +425,75 @@ type DocumentsInsert = Pick<
       "category" | "filename" | "storage_path" | "mime" | "bytes" | "sha256"
     >
   >;
+type JobStageTemplatesInsert = Pick<
+  JobStageTemplatesRow,
+  "job_type" | "name" | "sequence"
+> &
+  Partial<Omit<JobStageTemplatesRow, "job_type" | "name" | "sequence">>;
+type JobChecklistTemplatesInsert = Pick<
+  JobChecklistTemplatesRow,
+  "job_type" | "label" | "sequence"
+> &
+  Partial<Omit<JobChecklistTemplatesRow, "job_type" | "label" | "sequence">>;
+type RegistrationJobsInsert = Pick<
+  RegistrationJobsRow,
+  "client_id" | "job_type"
+> &
+  Partial<Omit<RegistrationJobsRow, "client_id" | "job_type">>;
+type JobStagesInsert = Pick<JobStagesRow, "job_id" | "name" | "sequence"> &
+  Partial<Omit<JobStagesRow, "job_id" | "name" | "sequence">>;
+type JobChecklistItemsInsert = Pick<JobChecklistItemsRow, "job_id" | "label"> &
+  Partial<Omit<JobChecklistItemsRow, "job_id" | "label">>;
+type GovernmentFeesInsert = Pick<
+  GovernmentFeesRow,
+  "job_id" | "agency" | "description" | "amount_at_cost" | "handling_fee"
+> &
+  Partial<
+    Omit<
+      GovernmentFeesRow,
+      "job_id" | "agency" | "description" | "amount_at_cost" | "handling_fee"
+    >
+  >;
+type SubscriptionsInsert = Pick<
+  SubscriptionsRow,
+  "client_id" | "plan_id" | "cycle" | "current_period_end"
+> &
+  Partial<
+    Omit<
+      SubscriptionsRow,
+      "client_id" | "plan_id" | "cycle" | "current_period_end"
+    >
+  >;
+type InvoicesInsert = Pick<InvoicesRow, "client_id" | "due_date"> &
+  Partial<Omit<InvoicesRow, "client_id" | "due_date">>;
+type InvoiceLinesInsert = Pick<
+  InvoiceLinesRow,
+  "invoice_id" | "kind" | "description" | "unit_price"
+> &
+  Partial<
+    Omit<
+      InvoiceLinesRow,
+      "invoice_id" | "kind" | "description" | "unit_price" | "amount"
+    >
+  >;
+type PaymentsInsert = Pick<PaymentsRow, "invoice_id" | "amount" | "method"> &
+  Partial<Omit<PaymentsRow, "invoice_id" | "amount" | "method">>;
+type EngagementLettersInsert = Pick<
+  EngagementLettersRow,
+  "client_id" | "signed_by_name"
+> &
+  Partial<Omit<EngagementLettersRow, "client_id" | "signed_by_name">>;
+type NotificationsInsert = Pick<
+  NotificationsRow,
+  "recipient_profile_id" | "template"
+> &
+  Partial<Omit<NotificationsRow, "recipient_profile_id" | "template">>;
+type TasksInsert = Pick<TasksRow, "title"> & Partial<Omit<TasksRow, "title">>;
+type EmailTemplatesInsert = Pick<
+  EmailTemplatesRow,
+  "key" | "subject" | "body_text"
+> &
+  Partial<Omit<EmailTemplatesRow, "key" | "subject" | "body_text">>;
 
 export type Database = {
   public: {
@@ -224,6 +524,72 @@ export type Database = {
         DocumentsInsert,
         Partial<Omit<DocumentsRow, "id">>
       >;
+      job_stage_templates: TableDef<
+        JobStageTemplatesRow,
+        JobStageTemplatesInsert,
+        Partial<Omit<JobStageTemplatesRow, "id">>
+      >;
+      job_checklist_templates: TableDef<
+        JobChecklistTemplatesRow,
+        JobChecklistTemplatesInsert,
+        Partial<Omit<JobChecklistTemplatesRow, "id">>
+      >;
+      registration_jobs: TableDef<
+        RegistrationJobsRow,
+        RegistrationJobsInsert,
+        Partial<Omit<RegistrationJobsRow, "id">>
+      >;
+      job_stages: TableDef<
+        JobStagesRow,
+        JobStagesInsert,
+        Partial<Omit<JobStagesRow, "id">>
+      >;
+      job_checklist_items: TableDef<
+        JobChecklistItemsRow,
+        JobChecklistItemsInsert,
+        Partial<Omit<JobChecklistItemsRow, "id">>
+      >;
+      government_fees: TableDef<
+        GovernmentFeesRow,
+        GovernmentFeesInsert,
+        Partial<Omit<GovernmentFeesRow, "id">>
+      >;
+      subscriptions: TableDef<
+        SubscriptionsRow,
+        SubscriptionsInsert,
+        Partial<Omit<SubscriptionsRow, "id">>
+      >;
+      invoices: TableDef<
+        InvoicesRow,
+        InvoicesInsert,
+        Partial<Omit<InvoicesRow, "id">>
+      >;
+      invoice_lines: TableDef<
+        InvoiceLinesRow,
+        InvoiceLinesInsert,
+        Partial<Omit<InvoiceLinesRow, "id" | "amount">>
+      >;
+      payments: TableDef<
+        PaymentsRow,
+        PaymentsInsert,
+        Partial<Omit<PaymentsRow, "id">>
+      >;
+      engagement_letters: TableDef<
+        EngagementLettersRow,
+        EngagementLettersInsert,
+        Partial<Omit<EngagementLettersRow, "id">>
+      >;
+      notifications: TableDef<
+        NotificationsRow,
+        NotificationsInsert,
+        Partial<Omit<NotificationsRow, "id">>
+      >;
+      tasks: TableDef<TasksRow, TasksInsert, Partial<Omit<TasksRow, "id">>>;
+      email_templates: TableDef<
+        EmailTemplatesRow,
+        EmailTemplatesInsert,
+        Partial<Omit<EmailTemplatesRow, "key">>
+      >;
       audit_log: TableDef<AuditLogRow, never, never>;
     };
     Views: Record<string, never>;
@@ -236,6 +602,28 @@ export type Database = {
         Args: Record<string, never>;
         Returns: boolean;
       };
+      create_registration_job: {
+        Args: {
+          p_client_id: string;
+          p_job_type: JobType;
+          p_is_renewal?: boolean;
+          p_target_date?: string | null;
+          p_notes?: string | null;
+        };
+        Returns: RegistrationJobsRow;
+      };
+      advance_registration_job_stage: {
+        Args: { p_job_id: string };
+        Returns: RegistrationJobsRow;
+      };
+      confirm_payment: {
+        Args: { p_payment_id: string };
+        Returns: PaymentsRow;
+      };
+      reject_payment: {
+        Args: { p_payment_id: string };
+        Returns: PaymentsRow;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -244,6 +632,18 @@ export type Database = {
       client_status: ClientStatus;
       fs_frequency: FsFrequency;
       document_source: DocumentSource;
+      job_type: JobType;
+      job_status: JobStatus;
+      stage_status: StageStatus;
+      subscription_cycle: SubscriptionCycle;
+      subscription_status: SubscriptionStatus;
+      invoice_status: InvoiceStatus;
+      invoice_line_kind: InvoiceLineKind;
+      payment_method: PaymentMethod;
+      payment_status: PaymentStatus;
+      notification_channel: NotificationChannel;
+      task_status: TaskStatus;
+      task_priority: TaskPriority;
     };
   };
 };

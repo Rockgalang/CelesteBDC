@@ -1,5 +1,5 @@
 import { OpsCockpit } from "@/app/(app)/ops-cockpit";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PortalHome } from "@/app/(app)/portal-home";
 import { getCurrentProfile, isInternalRole } from "@/lib/auth/current-profile";
 
 export default async function HomePage() {
@@ -19,23 +19,5 @@ export default async function HomePage() {
     );
   }
 
-  return (
-    <div className="mx-auto max-w-xl">
-      <Card>
-        <CardHeader>
-          <CardTitle>Welcome, {profile.full_name || "there"}</CardTitle>
-        </CardHeader>
-        <CardContent className="text-muted-foreground space-y-2 text-sm">
-          <p>
-            The client portal — receipt uploads, financial statements, invoices,
-            and payslips — ships in a later phase.
-          </p>
-          <p>
-            For now, reach your Celeste BDC contact directly for anything you
-            need.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <PortalHome profile={profile} />;
 }
