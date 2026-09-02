@@ -73,10 +73,16 @@ screen for this hasn't been built yet).
 
 `vercel.json` schedules three routes once deployed to Vercel:
 `generate-invoices` (1st of the month), `sweep-subscriptions` (daily —
-overdue warnings, grace, suspension), and `send-notifications` (every 15
-minutes — actually sends queued emails via Resend). Each checks
-`Authorization: Bearer $CRON_SECRET` when that env var is set; Vercel
-sets the header automatically for its own cron invocations.
+overdue warnings, grace, suspension), and `send-notifications` (daily —
+actually sends queued emails via Resend). Each checks `Authorization:
+Bearer $CRON_SECRET` when that env var is set; Vercel sets the header
+automatically for its own cron invocations.
+
+Hobby-plan Vercel accounts only allow daily cron jobs, so
+`send-notifications` runs once a day rather than every 15 minutes — a
+queued notification can sit for up to 24h before it goes out. Tighten
+this schedule once the project is on a paid plan (Pro allows any
+interval).
 
 ## Database
 
