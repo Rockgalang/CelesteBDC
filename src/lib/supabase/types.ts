@@ -61,6 +61,23 @@ export type NotificationChannel = "email" | "sms";
 export type TaskStatus = "open" | "in_progress" | "done" | "cancelled";
 export type TaskPriority = "low" | "normal" | "high" | "urgent";
 
+export type AccountType =
+  "asset" | "liability" | "equity" | "revenue" | "expense";
+export type NormalBalance = "debit" | "credit";
+export type JournalSource =
+  "receipt" | "bank" | "payroll" | "manual" | "opening" | "adjustment";
+export type JournalEntryStatus = "draft" | "posted" | "reversed";
+export type AccountingPeriodStatus = "open" | "closed" | "locked";
+export type BankTransactionMatchStatus = "unmatched" | "matched" | "ignored";
+export type ReceiptStatus =
+  | "uploaded"
+  | "processing"
+  | "ocr_failed"
+  | "needs_review"
+  | "approved"
+  | "rejected"
+  | "duplicate";
+
 export type ClientsRow = {
   id: string;
   business_name: string;
@@ -371,6 +388,138 @@ export type AuditLogRow = {
   created_at: string;
 };
 
+export type ChartOfAccountTemplatesRow = {
+  id: string;
+  template_group: "individual" | "corporate";
+  code: string;
+  name: string;
+  type: AccountType;
+  normal_balance: NormalBalance;
+  parent_code: string | null;
+  sequence: number;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type ChartOfAccountsRow = {
+  id: string;
+  client_id: string;
+  code: string;
+  name: string;
+  type: AccountType;
+  normal_balance: NormalBalance;
+  parent_id: string | null;
+  is_system: boolean;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type AccountingPeriodsRow = {
+  id: string;
+  client_id: string;
+  period: string;
+  status: AccountingPeriodStatus;
+  closed_at: string | null;
+  closed_by: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type JournalEntriesRow = {
+  id: string;
+  client_id: string;
+  entry_date: string;
+  period: string;
+  memo: string | null;
+  source: JournalSource;
+  source_id: string | null;
+  status: JournalEntryStatus;
+  posted_by: string | null;
+  posted_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type JournalLinesRow = {
+  id: string;
+  entry_id: string;
+  account_id: string;
+  debit: string;
+  credit: string;
+  memo: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type BankAccountsRow = {
+  id: string;
+  client_id: string;
+  bank_name: string;
+  account_name: string;
+  account_number_last4: string | null;
+  gl_account_id: string | null;
+  currency: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type BankTransactionsRow = {
+  id: string;
+  bank_account_id: string;
+  client_id: string;
+  txn_date: string;
+  description: string;
+  amount: string;
+  external_ref: string | null;
+  import_batch_id: string | null;
+  match_status: BankTransactionMatchStatus;
+  matched_journal_line_id: string | null;
+  matched_by: string | null;
+  matched_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type ReceiptsRow = {
+  id: string;
+  client_id: string;
+  uploaded_by: string | null;
+  storage_path: string;
+  mime: string;
+  bytes: number;
+  sha256: string;
+  status: ReceiptStatus;
+  ocr_raw: Record<string, unknown> | null;
+  ocr_confidence: Record<string, unknown> | null;
+  ocr_error: string | null;
+  vendor_name: string | null;
+  receipt_date: string | null;
+  amount: string | null;
+  currency: string;
+  category: string | null;
+  notes: string | null;
+  possible_duplicate_of: string | null;
+  debit_account_id: string | null;
+  credit_account_id: string | null;
+  journal_entry_id: string | null;
+  counted_period: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
 type TableDef<Row, Insert, Update> = {
   Row: Row;
   Insert: Insert;
@@ -494,6 +643,71 @@ type EmailTemplatesInsert = Pick<
   "key" | "subject" | "body_text"
 > &
   Partial<Omit<EmailTemplatesRow, "key" | "subject" | "body_text">>;
+type ChartOfAccountTemplatesInsert = Pick<
+  ChartOfAccountTemplatesRow,
+  "template_group" | "code" | "name" | "type" | "normal_balance" | "sequence"
+> &
+  Partial<
+    Omit<
+      ChartOfAccountTemplatesRow,
+      | "template_group"
+      | "code"
+      | "name"
+      | "type"
+      | "normal_balance"
+      | "sequence"
+    >
+  >;
+type ChartOfAccountsInsert = Pick<
+  ChartOfAccountsRow,
+  "client_id" | "code" | "name" | "type" | "normal_balance"
+> &
+  Partial<
+    Omit<
+      ChartOfAccountsRow,
+      "client_id" | "code" | "name" | "type" | "normal_balance"
+    >
+  >;
+type AccountingPeriodsInsert = Pick<
+  AccountingPeriodsRow,
+  "client_id" | "period"
+> &
+  Partial<Omit<AccountingPeriodsRow, "client_id" | "period">>;
+type JournalEntriesInsert = Pick<
+  JournalEntriesRow,
+  "client_id" | "period"
+> &
+  Partial<Omit<JournalEntriesRow, "client_id" | "period">>;
+type JournalLinesInsert = Pick<
+  JournalLinesRow,
+  "entry_id" | "account_id"
+> &
+  Partial<Omit<JournalLinesRow, "entry_id" | "account_id">>;
+type BankAccountsInsert = Pick<
+  BankAccountsRow,
+  "client_id" | "bank_name" | "account_name"
+> &
+  Partial<Omit<BankAccountsRow, "client_id" | "bank_name" | "account_name">>;
+type BankTransactionsInsert = Pick<
+  BankTransactionsRow,
+  "bank_account_id" | "client_id" | "txn_date" | "description" | "amount"
+> &
+  Partial<
+    Omit<
+      BankTransactionsRow,
+      "bank_account_id" | "client_id" | "txn_date" | "description" | "amount"
+    >
+  >;
+type ReceiptsInsert = Pick<
+  ReceiptsRow,
+  "client_id" | "storage_path" | "mime" | "bytes" | "sha256"
+> &
+  Partial<
+    Omit<
+      ReceiptsRow,
+      "client_id" | "storage_path" | "mime" | "bytes" | "sha256"
+    >
+  >;
 
 export type Database = {
   public: {
@@ -591,6 +805,46 @@ export type Database = {
         Partial<Omit<EmailTemplatesRow, "key">>
       >;
       audit_log: TableDef<AuditLogRow, never, never>;
+      chart_of_account_templates: TableDef<
+        ChartOfAccountTemplatesRow,
+        ChartOfAccountTemplatesInsert,
+        Partial<Omit<ChartOfAccountTemplatesRow, "id">>
+      >;
+      chart_of_accounts: TableDef<
+        ChartOfAccountsRow,
+        ChartOfAccountsInsert,
+        Partial<Omit<ChartOfAccountsRow, "id">>
+      >;
+      accounting_periods: TableDef<
+        AccountingPeriodsRow,
+        AccountingPeriodsInsert,
+        Partial<Omit<AccountingPeriodsRow, "id">>
+      >;
+      journal_entries: TableDef<
+        JournalEntriesRow,
+        JournalEntriesInsert,
+        Partial<Omit<JournalEntriesRow, "id">>
+      >;
+      journal_lines: TableDef<
+        JournalLinesRow,
+        JournalLinesInsert,
+        Partial<Omit<JournalLinesRow, "id">>
+      >;
+      bank_accounts: TableDef<
+        BankAccountsRow,
+        BankAccountsInsert,
+        Partial<Omit<BankAccountsRow, "id">>
+      >;
+      bank_transactions: TableDef<
+        BankTransactionsRow,
+        BankTransactionsInsert,
+        Partial<Omit<BankTransactionsRow, "id">>
+      >;
+      receipts: TableDef<
+        ReceiptsRow,
+        ReceiptsInsert,
+        Partial<Omit<ReceiptsRow, "id">>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
@@ -624,6 +878,50 @@ export type Database = {
         Args: { p_payment_id: string };
         Returns: PaymentsRow;
       };
+      create_default_chart_of_accounts: {
+        Args: { p_client_id: string };
+        Returns: ChartOfAccountsRow[];
+      };
+      reverse_journal_entry: {
+        Args: { p_entry_id: string; p_memo?: string | null };
+        Returns: JournalEntriesRow;
+      };
+      close_accounting_period: {
+        Args: { p_client_id: string; p_period: string };
+        Returns: AccountingPeriodsRow;
+      };
+      reopen_accounting_period: {
+        Args: { p_client_id: string; p_period: string; p_reason: string };
+        Returns: AccountingPeriodsRow;
+      };
+      match_bank_transaction: {
+        Args: { p_transaction_id: string; p_journal_line_id: string };
+        Returns: BankTransactionsRow;
+      };
+      unmatch_bank_transaction: {
+        Args: { p_transaction_id: string };
+        Returns: BankTransactionsRow;
+      };
+      approve_receipt: {
+        Args: {
+          p_receipt_id: string;
+          p_debit_account_id: string;
+          p_credit_account_id: string;
+        };
+        Returns: ReceiptsRow;
+      };
+      reject_receipt: {
+        Args: { p_receipt_id: string; p_reason: string };
+        Returns: ReceiptsRow;
+      };
+      mark_receipt_duplicate: {
+        Args: { p_receipt_id: string; p_duplicate_of_id: string };
+        Returns: ReceiptsRow;
+      };
+      count_receipts_for_period: {
+        Args: { p_client_id: string; p_period: string };
+        Returns: number;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -644,6 +942,13 @@ export type Database = {
       notification_channel: NotificationChannel;
       task_status: TaskStatus;
       task_priority: TaskPriority;
+      account_type: AccountType;
+      normal_balance: NormalBalance;
+      journal_source: JournalSource;
+      journal_entry_status: JournalEntryStatus;
+      accounting_period_status: AccountingPeriodStatus;
+      bank_transaction_match_status: BankTransactionMatchStatus;
+      receipt_status: ReceiptStatus;
     };
   };
 };
