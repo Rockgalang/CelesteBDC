@@ -2,11 +2,14 @@ import type { LucideIcon } from "lucide-react";
 import {
   CameraIcon,
   FileTextIcon,
+  HomeIcon,
+  LandmarkIcon,
   LayoutDashboardIcon,
   MailIcon,
   ReceiptIcon,
   ScanSearchIcon,
   UsersIcon,
+  UsersRoundIcon,
   WorkflowIcon,
 } from "lucide-react";
 
@@ -21,10 +24,16 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   {
-    href: "/",
+    href: "/dashboard",
     label: "Ops Cockpit",
     icon: LayoutDashboardIcon,
     roles: ["owner", "staff"],
+  },
+  {
+    href: "/dashboard",
+    label: "Home",
+    icon: HomeIcon,
+    roles: ["client_admin", "client_user"],
   },
   {
     href: "/clients",
@@ -60,6 +69,18 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/receipts/review",
     label: "Receipt review",
     icon: ScanSearchIcon,
+    roles: ["owner", "staff"],
+  },
+  {
+    href: "/tax",
+    label: "Tax",
+    icon: LandmarkIcon,
+    roles: ["client_admin", "client_user"],
+  },
+  {
+    href: "/payroll",
+    label: "Payroll",
+    icon: UsersRoundIcon,
     roles: ["owner", "staff"],
   },
   {

@@ -32,7 +32,7 @@ export async function loginAction(input: LoginInput): Promise<ActionResult> {
     return { ok: false, error: "Incorrect email or password." };
   }
 
-  redirect("/");
+  redirect("/dashboard");
 }
 
 export async function sendMagicLinkAction(

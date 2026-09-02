@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { navItemsForRole } from "@/components/app-shell/nav-items";
 import { SidebarNav } from "@/components/app-shell/sidebar-nav";
 import { UserMenu } from "@/components/app-shell/user-menu";
@@ -14,9 +16,12 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen">
       <aside className="bg-card hidden w-60 shrink-0 flex-col border-r p-4 md:flex">
-        <span className="mb-6 px-3 text-lg font-semibold tracking-tight">
+        <Link
+          href="/dashboard"
+          className="mb-6 px-3 text-lg font-semibold tracking-tight"
+        >
           Celeste<span className="text-primary">.bdc</span>
-        </span>
+        </Link>
         <SidebarNav items={items} />
       </aside>
       <div className="flex min-h-screen flex-1 flex-col">

@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 
 import type { Database } from "@/lib/supabase/types";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/verify-email"];
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/auth", "/verify-email"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(
@@ -69,8 +69,17 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  if (user && isPublicPath(pathname) && pathname !== "/auth/callback") {
-    return NextResponse.redirect(new URL("/", request.url));
+  // "/" stays visible to signed-in users too (it renders a "go to
+  // dashboard" CTA instead of "sign in") — redirecting it would loop
+  // back to itself. /auth/callback is excluded for the same reason it
+  // always was: it's mid-flow, not a page to bounce away from.
+  if (
+    user &&
+    isPublicPath(pathname) &&
+    pathname !== "/auth/callback" &&
+    pathname !== "/"
+  ) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   return supabaseResponse;

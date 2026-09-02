@@ -3,19 +3,40 @@
 Philippine business-compliance platform for Celeste BDC. Next.js 15 (App
 Router) + Supabase Postgres, RLS-enforced, mobile-first.
 
-This repository currently implements **Phase 0 — Foundation**,
-**Phase 1 — Money and pipeline**, and **Phase 2 — Bookkeeping** of the
-build spec: project scaffold, database schema, auth/RBAC, row-level
-security, audit logging, the document vault, the client registry, the
-Ops Cockpit shell, the onboarding wizard, the registration pipeline
-(Kanban, checklists, government fee ledger), billing (subscriptions,
-invoice generation, manual payment confirmation), a first client portal,
-core email notifications, a double-entry journal engine with period
-close/reopen, per-client chart of accounts, receipt capture with Claude
-vision OCR extraction and a review queue that posts journal entries, bank
-statement import/reconciliation, and compiled (unaudited) trial
-balance/income statement/balance sheet views. Phases 3–5 (tax engine,
-payroll, scale) are not yet built.
+This repository implements the build spec's full route surface across all
+six phases, though **Phase 4 (payroll)** is a deliberately honest
+placeholder rather than working software (see below — payroll needs its
+own data model, which was explicitly out of scope for this pass). What's
+real:
+
+- **Phase 0 — Foundation**: project scaffold, database schema, auth/RBAC,
+  row-level security, audit logging, the document vault, the client
+  registry, the Ops Cockpit shell.
+- **Phase 1 — Money and pipeline**: the onboarding wizard, the
+  registration pipeline (Kanban, checklists, government fee ledger),
+  billing (subscriptions, invoice generation, manual payment
+  confirmation), a first client portal, core email notifications.
+- **Phase 2 — Bookkeeping**: a double-entry journal engine with period
+  close/reopen, per-client chart of accounts, receipt capture with Claude
+  vision OCR extraction and a review queue that posts journal entries,
+  bank statement import/reconciliation, and compiled (unaudited) trial
+  balance/income statement/balance sheet views.
+- **Phase 3 — Tax**: a BIR filing deadline calendar (per client, derived
+  from entity type/tax type/VAT registration) with filed/overdue tracking
+  for internal staff and a read-only view for clients. No filing API —
+  build spec §2.4 rules that out entirely; this only tracks what's due.
+- **Phase 5 — Scale**: a plan-usage indicator on the client receipt page
+  (transactions used vs. plan limit), a real Ops Cockpit wired to actual
+  data across every shipped module, and a daily renewal-reminder sweep
+  that creates an internal task when a tracked document nears expiry.
+- **Landing page**: a public marketing page at `/` with live pricing
+  pulled from the `plans` table; the authenticated app now lives at
+  `/dashboard`.
+
+The Ops Cockpit, every internal nav item, and the client portal reflect
+all of the above — nothing here is a Phase-N stub pretending to be
+finished. Where a section is genuinely unbuilt (payroll runs, document
+requests), it says so instead of faking data.
 
 ## Stack
 
@@ -77,10 +98,17 @@ screen for this hasn't been built yet).
 
 `vercel.json` schedules three routes once deployed to Vercel:
 `generate-invoices` (1st of the month), `sweep-subscriptions` (daily —
-overdue warnings, grace, suspension), and `send-notifications` (daily —
-actually sends queued emails via Resend). Each checks `Authorization:
-Bearer $CRON_SECRET` when that env var is set; Vercel sets the header
-automatically for its own cron invocations.
+overdue warnings, grace, suspension, **and** the renewal-reminder sweep),
+and `send-notifications` (daily — actually sends queued emails via
+Resend). Each checks `Authorization: Bearer $CRON_SECRET` when that env
+var is set; Vercel sets the header automatically for its own cron
+invocations.
+
+A fourth route, `renewal-reminders`, exists at
+`/api/cron/renewal-reminders` for manual/on-demand use but isn't in
+`vercel.json` — its logic runs inside `sweep-subscriptions` instead
+(see `src/lib/renewals/reminders.ts`) to stay within the Hobby-plan cron
+count rather than claim a fourth schedule slot.
 
 Hobby-plan Vercel accounts only allow daily cron jobs, so
 `send-notifications` runs once a day rather than every 15 minutes — a
@@ -142,15 +170,25 @@ CI setup.)
 
 ## What's deliberately not here yet
 
-- **No tax engine or payroll** — Phases 3–4. Concretely: employee
-  overage invoice lines are never generated (there's no payroll data yet
-  to count them from — see the comment atop
-  `src/app/api/cron/generate-invoices/route.ts`); the Ops Cockpit's
-  "filings due" and "payroll runs due" sections stay at their honest
-  empty state; no BIR forms, tax computations, or payslips exist yet.
-  Transaction-overage invoice lines are still not generated either —
-  `count_receipts_for_period()` exists but nothing wires it into billing
-  yet.
+- **Payroll (Phase 4) is a placeholder, not a feature.** `/payroll` shows
+  which clients are plan-eligible for payroll (`plans.employee_limit` /
+  `features.payroll_locked`) and says plainly that runs and payslips
+  aren't built. Payroll genuinely needs its own data model — employees,
+  pay periods, government-contribution computation, payslips — which was
+  out of scope for this pass; faking a data-entry UI with nowhere real to
+  persist it would be worse than the honest placeholder. Employee-overage
+  invoice lines are never generated for the same reason (see the comment
+  atop `src/app/api/cron/generate-invoices/route.ts`).
+- **Tax (Phase 3) is a deadline calendar, not a filing system.**
+  `src/lib/tax/deadlines.ts` computes a generic BIR calendar from a
+  client's entity type/tax type/VAT registration — it is explicitly
+  labeled a planning aid, not tax advice, and is not a substitute for a
+  CPA's review of the actual due dates for a given RDO/ruling. Marking an
+  obligation "filed" just closes an internal task; nothing here prepares,
+  computes, or submits a return (no BIR API exists to submit to — build
+  spec §2.4). Transaction-overage invoice lines still aren't generated
+  from `count_receipts_for_period()` — it exists but nothing wires it
+  into billing yet.
 - **Bookkeeping (Phase 2) is built but manually operated**: receipt OCR
   needs `ANTHROPIC_API_KEY` set or every upload falls back to
   `needs_review` with manual data entry; bank reconciliation is
@@ -163,16 +201,20 @@ CI setup.)
 - **No payment gateway** — proof-of-payment upload + manual confirmation
   only, per build spec §2.4, behind a schema that isolates billing logic
   from any specific payment method.
-- **The renewal engine is not automated** — build spec §8 itself places
-  this in Phase 5. `documents.expires_at` is tracked and the Ops Cockpit
-  surfaces what's expiring in 90 days, but nothing auto-creates a renewal
-  `registration_job` yet.
-- **Document-request tracking, filing confirmations, "FS ready," and plan
-  limit warnings** are not built — each needs a data source this build
-  doesn't have (a document-request table, the tax engine, FS generation,
-  transaction counting). Their `email_templates` rows aren't seeded
-  either; add them when the phase that triggers them ships.
+- **The renewal engine only reminds, it doesn't act.** The daily sweep
+  (`src/lib/renewals/reminders.ts`) creates an internal task when a
+  tracked document is within 30 days of `expires_at` — it does not
+  auto-create a renewal `registration_job`, because `documents.category`
+  is generic free text with no reliable mapping to a specific BIR/DTI/SEC
+  job type. Guessing that mapping wrong seemed worse than a human
+  starting the renewal themselves from the reminder.
+- **Document-request tracking, filing confirmations, and "FS ready"
+  notifications** are not built — each needs a data source this build
+  doesn't have (a document-request table, filing-status webhooks, an
+  FS-generation trigger). Their `email_templates` rows aren't seeded
+  either; add them when the feature that triggers them ships.
 - **No message thread** between Cel and clients (build spec §7.10) yet.
 - The client portal home shows registration status, document count, and
-  unpaid invoices — not yet the receipt-count-against-plan-limit or
-  next-tax-deadline widgets, which need Phase 2/3 data.
+  unpaid invoices; the receipt page separately shows plan-usage and the
+  tax page shows the filing calendar — these haven't been consolidated
+  onto one dashboard widget.

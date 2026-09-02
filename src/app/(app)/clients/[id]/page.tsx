@@ -55,6 +55,9 @@ export default async function ClientDetailPage({
           <Button asChild variant="outline" size="sm">
             <Link href={`/clients/${client.id}/accounting`}>Accounting</Link>
           </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/clients/${client.id}/tax`}>Tax</Link>
+          </Button>
         </div>
       </div>
 
