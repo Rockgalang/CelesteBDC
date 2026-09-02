@@ -1,9 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  CameraIcon,
   FileTextIcon,
   LayoutDashboardIcon,
   MailIcon,
   ReceiptIcon,
+  ScanSearchIcon,
   UsersIcon,
   WorkflowIcon,
 } from "lucide-react";
@@ -47,6 +49,18 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Documents",
     icon: FileTextIcon,
     roles: ["client_admin", "client_user"],
+  },
+  {
+    href: "/receipts",
+    label: "Receipts",
+    icon: CameraIcon,
+    roles: ["client_admin", "client_user"],
+  },
+  {
+    href: "/receipts/review",
+    label: "Receipt review",
+    icon: ScanSearchIcon,
+    roles: ["owner", "staff"],
   },
   {
     href: "/settings/email-templates",

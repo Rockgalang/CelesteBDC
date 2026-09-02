@@ -48,9 +48,14 @@ export default async function ClientDetailPage({
             <p className="text-muted-foreground text-sm">{client.trade_name}</p>
           )}
         </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/clients/${client.id}/onboarding`}>Onboarding</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/clients/${client.id}/onboarding`}>Onboarding</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/clients/${client.id}/accounting`}>Accounting</Link>
+          </Button>
+        </div>
       </div>
 
       <ClientForm

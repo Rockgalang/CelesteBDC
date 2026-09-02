@@ -3,15 +3,19 @@
 Philippine business-compliance platform for Celeste BDC. Next.js 15 (App
 Router) + Supabase Postgres, RLS-enforced, mobile-first.
 
-This repository currently implements **Phase 0 — Foundation** and
-**Phase 1 — Money and pipeline** of the build spec: project scaffold,
-database schema, auth/RBAC, row-level security, audit logging, the
-document vault, the client registry, the Ops Cockpit shell, the
-onboarding wizard, the registration pipeline (Kanban, checklists,
-government fee ledger), billing (subscriptions, invoice generation,
-manual payment confirmation), a first client portal, and core email
-notifications. Phases 2–5 (bookkeeping, tax engine, payroll, scale) are
-not yet built.
+This repository currently implements **Phase 0 — Foundation**,
+**Phase 1 — Money and pipeline**, and **Phase 2 — Bookkeeping** of the
+build spec: project scaffold, database schema, auth/RBAC, row-level
+security, audit logging, the document vault, the client registry, the
+Ops Cockpit shell, the onboarding wizard, the registration pipeline
+(Kanban, checklists, government fee ledger), billing (subscriptions,
+invoice generation, manual payment confirmation), a first client portal,
+core email notifications, a double-entry journal engine with period
+close/reopen, per-client chart of accounts, receipt capture with Claude
+vision OCR extraction and a review queue that posts journal entries, bank
+statement import/reconciliation, and compiled (unaudited) trial
+balance/income statement/balance sheet views. Phases 3–5 (tax engine,
+payroll, scale) are not yet built.
 
 ## Stack
 
@@ -138,13 +142,24 @@ CI setup.)
 
 ## What's deliberately not here yet
 
-- **No bookkeeping, tax engine, or payroll** — Phases 2–4. Concretely,
-  this means: transaction/employee overage invoice lines are never
-  generated (there's no receipt or payroll data yet to count them from —
-  see the comment atop `src/app/api/cron/generate-invoices/route.ts`);
-  the Ops Cockpit's "filings due," "receipts awaiting review," and
-  "payroll runs due" sections stay at their honest empty state; financial
-  statements and payslips don't exist.
+- **No tax engine or payroll** — Phases 3–4. Concretely: employee
+  overage invoice lines are never generated (there's no payroll data yet
+  to count them from — see the comment atop
+  `src/app/api/cron/generate-invoices/route.ts`); the Ops Cockpit's
+  "filings due" and "payroll runs due" sections stay at their honest
+  empty state; no BIR forms, tax computations, or payslips exist yet.
+  Transaction-overage invoice lines are still not generated either —
+  `count_receipts_for_period()` exists but nothing wires it into billing
+  yet.
+- **Bookkeeping (Phase 2) is built but manually operated**: receipt OCR
+  needs `ANTHROPIC_API_KEY` set or every upload falls back to
+  `needs_review` with manual data entry; bank reconciliation is
+  CSV-import-only (no live bank feed); financial statements are compiled
+  management accounts (trial balance, income statement, balance sheet)
+  computed live from posted journal entries — not audited, and revenue/
+  expense accounts are never closed to retained earnings at period end
+  (the balance sheet shows a running "net income to date, not yet closed"
+  line instead).
 - **No payment gateway** — proof-of-payment upload + manual confirmation
   only, per build spec §2.4, behind a schema that isolates billing logic
   from any specific payment method.
