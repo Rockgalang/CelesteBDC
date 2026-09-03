@@ -15,16 +15,21 @@ import { money } from "@/lib/money";
 import { upcomingTaxObligations } from "@/lib/tax/deadlines";
 import { createClient } from "@/lib/supabase/server";
 
+function currentMonth() {
+  return new Date().toISOString().slice(0, 7);
+}
+
 /**
  * Cel's home screen (build spec §7.1): one prioritized queue, sorted by
  * risk of penalty. Every section below is wired to real data now that
- * the module backing it has shipped, except "Payroll runs due" and
- * "Clients missing documents" — payroll and document-request tracking
- * genuinely don't exist yet (see README's "deliberately not here yet").
+ * the module backing it has shipped, except "Clients missing documents"
+ * — document-request tracking genuinely doesn't exist yet (see README's
+ * "deliberately not here yet").
  */
 export async function OpsCockpit() {
   const supabase = await createClient();
   const today = new Date();
+  const period = currentMonth();
 
   const in90Days = new Date(today);
   in90Days.setDate(in90Days.getDate() + 90);
@@ -36,6 +41,8 @@ export async function OpsCockpit() {
     { data: receiptsQueue },
     { data: stalledJobs },
     { data: unpaidInvoices },
+    { data: activeEmployees },
+    { data: currentPeriodRuns },
   ] = await Promise.all([
     supabase
       .from("documents")
@@ -71,6 +78,8 @@ export async function OpsCockpit() {
       .in("status", ["issued", "partially_paid", "overdue"])
       .order("due_date", { ascending: true })
       .limit(5),
+    supabase.from("employees").select("client_id").eq("status", "active"),
+    supabase.from("payroll_runs").select("client_id").eq("period", period),
   ]);
 
   const permitCount = expiringDocuments?.length ?? 0;
@@ -109,6 +118,18 @@ export async function OpsCockpit() {
   }
   dueFilings.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   const dueFilingsTop = dueFilings.slice(0, 5);
+
+  const clientsWithEmployees = new Set(
+    (activeEmployees ?? []).map((e) => e.client_id),
+  );
+  const clientsWithRunThisPeriod = new Set(
+    (currentPeriodRuns ?? []).map((r) => r.client_id),
+  );
+  const payrollDue = (activeClients ?? []).filter(
+    (c) =>
+      clientsWithEmployees.has(c.id) && !clientsWithRunThisPeriod.has(c.id),
+  );
+  const payrollDueTop = payrollDue.slice(0, 5);
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -161,10 +182,19 @@ export async function OpsCockpit() {
       <CockpitSection
         title="Payroll runs due"
         icon={WalletIcon}
-        count={0}
-        emptyLabel="Payroll runs aren't built yet — see the Payroll page for plan eligibility."
+        count={payrollDue.length}
         href="/payroll"
-      />
+        emptyLabel={`Every client with active employees has a ${period} payroll run.`}
+      >
+        <ul className="space-y-2">
+          {payrollDueTop.map((c) => (
+            <li key={c.id} className="flex items-center justify-between text-sm">
+              <span className="truncate">{c.business_name}</span>
+              <Badge variant="outline">{period}</Badge>
+            </li>
+          ))}
+        </ul>
+      </CockpitSection>
 
       <CockpitSection
         title="Clients missing documents"

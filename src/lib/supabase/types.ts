@@ -78,6 +78,11 @@ export type ReceiptStatus =
   | "rejected"
   | "duplicate";
 
+export type EmploymentType =
+  "regular" | "probationary" | "contractual" | "part_time";
+export type EmployeeStatus = "active" | "on_leave" | "separated";
+export type PayrollRunStatus = "draft" | "processed";
+
 export type ClientsRow = {
   id: string;
   business_name: string;
@@ -520,6 +525,62 @@ export type ReceiptsRow = {
   created_by: string | null;
 };
 
+export type EmployeesRow = {
+  id: string;
+  client_id: string;
+  full_name: string;
+  position: string | null;
+  employment_type: EmploymentType;
+  monthly_rate: string;
+  sss_no: string | null;
+  philhealth_no: string | null;
+  pagibig_no: string | null;
+  tin: string | null;
+  hire_date: string | null;
+  separation_date: string | null;
+  status: EmployeeStatus;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type PayrollRunsRow = {
+  id: string;
+  client_id: string;
+  period: string;
+  pay_date: string | null;
+  status: PayrollRunStatus;
+  processed_by: string | null;
+  processed_at: string | null;
+  journal_entry_id: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type PayslipsRow = {
+  id: string;
+  payroll_run_id: string;
+  employee_id: string;
+  client_id: string;
+  basic_pay: string;
+  overtime_pay: string;
+  allowances: string;
+  gross_pay: string;
+  sss_employee: string;
+  sss_employer: string;
+  philhealth_employee: string;
+  philhealth_employer: string;
+  pagibig_employee: string;
+  pagibig_employer: string;
+  withholding_tax: string;
+  other_deductions: string;
+  net_pay: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
 type TableDef<Row, Insert, Update> = {
   Row: Row;
   Insert: Insert;
@@ -708,6 +769,27 @@ type ReceiptsInsert = Pick<
       "client_id" | "storage_path" | "mime" | "bytes" | "sha256"
     >
   >;
+type EmployeesInsert = Pick<
+  EmployeesRow,
+  "client_id" | "full_name" | "monthly_rate"
+> &
+  Partial<Omit<EmployeesRow, "client_id" | "full_name" | "monthly_rate">>;
+type PayrollRunsInsert = Pick<PayrollRunsRow, "client_id" | "period"> &
+  Partial<Omit<PayrollRunsRow, "client_id" | "period">>;
+type PayslipsInsert = Pick<
+  PayslipsRow,
+  "payroll_run_id" | "employee_id" | "client_id"
+> &
+  Partial<
+    Omit<
+      PayslipsRow,
+      | "payroll_run_id"
+      | "employee_id"
+      | "client_id"
+      | "gross_pay"
+      | "net_pay"
+    >
+  >;
 
 export type Database = {
   public: {
@@ -845,6 +927,21 @@ export type Database = {
         ReceiptsInsert,
         Partial<Omit<ReceiptsRow, "id">>
       >;
+      employees: TableDef<
+        EmployeesRow,
+        EmployeesInsert,
+        Partial<Omit<EmployeesRow, "id">>
+      >;
+      payroll_runs: TableDef<
+        PayrollRunsRow,
+        PayrollRunsInsert,
+        Partial<Omit<PayrollRunsRow, "id">>
+      >;
+      payslips: TableDef<
+        PayslipsRow,
+        PayslipsInsert,
+        Partial<Omit<PayslipsRow, "id" | "gross_pay" | "net_pay">>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
@@ -922,6 +1019,21 @@ export type Database = {
         Args: { p_client_id: string; p_period: string };
         Returns: number;
       };
+      create_payroll_run: {
+        Args: { p_client_id: string; p_period: string; p_pay_date: string | null };
+        Returns: PayrollRunsRow;
+      };
+      process_payroll_run: {
+        Args: {
+          p_payroll_run_id: string;
+          p_wages_account_id: string;
+          p_employer_contrib_account_id: string;
+          p_wht_payable_account_id: string;
+          p_contributions_payable_account_id: string;
+          p_cash_account_id: string;
+        };
+        Returns: PayrollRunsRow;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -949,6 +1061,9 @@ export type Database = {
       accounting_period_status: AccountingPeriodStatus;
       bank_transaction_match_status: BankTransactionMatchStatus;
       receipt_status: ReceiptStatus;
+      employment_type: EmploymentType;
+      employee_status: EmployeeStatus;
+      payroll_run_status: PayrollRunStatus;
     };
   };
 };

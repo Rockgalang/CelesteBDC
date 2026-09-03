@@ -3,11 +3,9 @@
 Philippine business-compliance platform for Celeste BDC. Next.js 15 (App
 Router) + Supabase Postgres, RLS-enforced, mobile-first.
 
-This repository implements the build spec's full route surface across all
-six phases, though **Phase 4 (payroll)** is a deliberately honest
-placeholder rather than working software (see below — payroll needs its
-own data model, which was explicitly out of scope for this pass). What's
-real:
+This repository implements all six phases of the build spec end to end —
+schema, RLS, business logic, and UI for every phase, including payroll.
+What's real:
 
 - **Phase 0 — Foundation**: project scaffold, database schema, auth/RBAC,
   row-level security, audit logging, the document vault, the client
@@ -25,9 +23,18 @@ real:
   from entity type/tax type/VAT registration) with filed/overdue tracking
   for internal staff and a read-only view for clients. No filing API —
   build spec §2.4 rules that out entirely; this only tracks what's due.
+- **Phase 4 — Payroll**: an employee roster, monthly payroll runs seeded
+  from each active employee's rate, per-payslip government-contribution
+  estimates (SSS/PhilHealth/Pag-IBIG/withholding tax — editable before
+  processing), and processing a run posts one balanced journal entry
+  (wages + employer contributions debited; withholding tax payable,
+  contributions payable, and cash credited). Processed runs and their
+  payslips are immutable, same as posted journal entries.
 - **Phase 5 — Scale**: a plan-usage indicator on the client receipt page
-  (transactions used vs. plan limit), a real Ops Cockpit wired to actual
-  data across every shipped module, and a daily renewal-reminder sweep
+  (transactions used vs. plan limit), transaction/employee-overage
+  invoice lines generated automatically from real receipt and employee
+  counts, a real Ops Cockpit wired to actual data across every shipped
+  module (including payroll-runs-due), and a daily renewal-reminder sweep
   that creates an internal task when a tracked document nears expiry.
 - **Landing page**: a public marketing page at `/` with live pricing
   pulled from the `plans` table; the authenticated app now lives at
@@ -35,8 +42,8 @@ real:
 
 The Ops Cockpit, every internal nav item, and the client portal reflect
 all of the above — nothing here is a Phase-N stub pretending to be
-finished. Where a section is genuinely unbuilt (payroll runs, document
-requests), it says so instead of faking data.
+finished. Where a section is genuinely unbuilt (document requests), it
+says so instead of faking data.
 
 ## Stack
 
@@ -158,27 +165,31 @@ npx supabase start
 npx supabase test db
 ```
 
-(This has been verified by hand — twice, once after Phase 0 and again
-after Phase 1's migrations were added — against a throwaway Postgres 16
-instance with stand-in `auth`/`storage` schemas, since this environment
-has no Docker daemon for `supabase start`. All 8 assertions pass both
-times. The billing/registration RPCs — `create_registration_job`,
-`advance_registration_job_stage`, `confirm_payment`, `reject_payment`,
-`generate_invoice_number` — were also smoke-tested by hand the same way.
-Re-run the pgTAP suite for real once the project is linked, as part of a
-CI setup.)
+(This has been verified by hand after every phase's migrations were
+added — Phase 0 through the Phase 4 payroll migration — against a
+throwaway Postgres 16 instance with stand-in `auth`/`storage` schemas,
+since this environment has no Docker daemon for `supabase start`. All 8
+assertions pass every time. Every RPC that changes money or posts a
+journal entry — `create_registration_job`, `confirm_payment`,
+`approve_receipt`, `close_accounting_period`, `match_bank_transaction`,
+`process_payroll_run`, and more — has an accompanying hand-run smoke test
+covering its balancing/immutability/RLS invariants (see the `*_smoke.sql`
+scripts referenced in each phase's commit). Re-run the pgTAP suite for
+real once the project is linked, as part of a CI setup.)
 
 ## What's deliberately not here yet
 
-- **Payroll (Phase 4) is a placeholder, not a feature.** `/payroll` shows
-  which clients are plan-eligible for payroll (`plans.employee_limit` /
-  `features.payroll_locked`) and says plainly that runs and payslips
-  aren't built. Payroll genuinely needs its own data model — employees,
-  pay periods, government-contribution computation, payslips — which was
-  out of scope for this pass; faking a data-entry UI with nowhere real to
-  persist it would be worse than the honest placeholder. Employee-overage
-  invoice lines are never generated for the same reason (see the comment
-  atop `src/app/api/cron/generate-invoices/route.ts`).
+- **Payroll (Phase 4) computes contributions with approximate formulas,
+  not the official bracket tables.** `src/lib/payroll/computations.ts`
+  estimates SSS, PhilHealth, and Pag-IBIG as flat percentages of a capped
+  base, not the real Monthly Salary Credit / contribution bracket tables
+  (which step in narrower bands than a flat rate) — close for most
+  salaries, not exact at bracket boundaries. Every figure is editable per
+  payslip before a run is processed, so the estimate is a starting point,
+  not the final word. The BIR monthly withholding tax table it uses *is*
+  the official TRAIN-law table and is not a simplification. There's also
+  no employee self-service login — payslips are managed by owner/staff
+  only, per build spec's framing of payroll as a service Cel's team runs.
 - **Tax (Phase 3) is a deadline calendar, not a filing system.**
   `src/lib/tax/deadlines.ts` computes a generic BIR calendar from a
   client's entity type/tax type/VAT registration — it is explicitly
@@ -186,9 +197,7 @@ CI setup.)
   CPA's review of the actual due dates for a given RDO/ruling. Marking an
   obligation "filed" just closes an internal task; nothing here prepares,
   computes, or submits a return (no BIR API exists to submit to — build
-  spec §2.4). Transaction-overage invoice lines still aren't generated
-  from `count_receipts_for_period()` — it exists but nothing wires it
-  into billing yet.
+  spec §2.4).
 - **Bookkeeping (Phase 2) is built but manually operated**: receipt OCR
   needs `ANTHROPIC_API_KEY` set or every upload falls back to
   `needs_review` with manual data entry; bank reconciliation is

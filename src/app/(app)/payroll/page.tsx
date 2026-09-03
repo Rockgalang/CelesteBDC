@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { UsersRoundIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -17,23 +18,27 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Payroll — Celeste.bdc" };
 
-/**
- * Payroll (build spec Phase 4) is not built yet — it needs its own data
- * model (employees, pay periods, government-contribution computations,
- * payslips), which is out of scope for this pass. Rather than fake a
- * payroll UI with nowhere real to save data, this page is honest about
- * what exists today: which clients are even eligible for payroll on
- * their current plan (`plans.features.payroll_locked`,
- * `plans.employee_limit` — see build spec §5), and nothing more.
- */
 export default async function PayrollPage() {
   await requireRole("owner", "staff");
 
   const supabase = await createClient();
-  const { data: subscriptions } = await supabase
-    .from("subscriptions")
-    .select("client_id, status, clients(id, business_name), plans(name, employee_limit, features)")
-    .eq("status", "active");
+  const [{ data: subscriptions }, { data: employeeCounts }] = await Promise.all([
+    supabase
+      .from("subscriptions")
+      .select(
+        "client_id, status, clients(id, business_name), plans(name, employee_limit, features)",
+      )
+      .eq("status", "active"),
+    supabase.from("employees").select("client_id, status").eq("status", "active"),
+  ]);
+
+  const activeCountByClient = new Map<string, number>();
+  for (const e of employeeCounts ?? []) {
+    activeCountByClient.set(
+      e.client_id,
+      (activeCountByClient.get(e.client_id) ?? 0) + 1,
+    );
+  }
 
   const rows = (subscriptions ?? []).map((s) => {
     const client = s.clients as unknown as {
@@ -46,7 +51,8 @@ export default async function PayrollPage() {
       features: Record<string, unknown>;
     } | null;
     const locked = plan?.features?.payroll_locked === true;
-    return { client, plan, locked };
+    const activeEmployees = client ? (activeCountByClient.get(client.id) ?? 0) : 0;
+    return { client, plan, locked, activeEmployees };
   });
 
   return (
@@ -54,16 +60,15 @@ export default async function PayrollPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Payroll</h1>
         <p className="text-muted-foreground text-sm">
-          Payroll runs and payslips aren&apos;t built yet. This page shows
-          which clients are eligible for payroll under their current plan
-          while that module is in progress.
+          Every client with an active subscription, their plan&apos;s
+          payroll eligibility, and how many active employees are on file.
         </p>
       </div>
 
       <Card>
         <CardHeader className="flex-row items-center gap-2 space-y-0">
           <UsersRoundIcon className="text-muted-foreground size-5" />
-          <CardTitle>Plan eligibility</CardTitle>
+          <CardTitle>Clients</CardTitle>
         </CardHeader>
         <CardContent>
           {rows.length === 0 ? (
@@ -76,33 +81,34 @@ export default async function PayrollPage() {
                 <TableRow>
                   <TableHead>Client</TableHead>
                   <TableHead>Plan</TableHead>
-                  <TableHead>Payroll</TableHead>
+                  <TableHead>Employees</TableHead>
+                  <TableHead />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {rows.map((r) => (
                   <TableRow key={r.client?.id}>
-                    <TableCell>
-                      {r.client ? (
-                        <Link
-                          href={`/clients/${r.client.id}`}
-                          className="hover:underline"
-                        >
-                          {r.client.business_name}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
+                    <TableCell>{r.client?.business_name ?? "—"}</TableCell>
                     <TableCell>{r.plan?.name ?? "—"}</TableCell>
                     <TableCell>
                       {r.locked ? (
                         <Badge variant="outline">Not included</Badge>
                       ) : (
-                        <Badge variant="secondary">
-                          Up to {r.plan?.employee_limit ?? "—"} employees —
-                          coming soon
-                        </Badge>
+                        <span>
+                          {r.activeEmployees}
+                          {r.plan?.employee_limit !== null &&
+                            r.plan?.employee_limit !== undefined &&
+                            ` / ${r.plan.employee_limit}`}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {r.client && (
+                        <Button asChild variant="ghost" size="sm">
+                          <Link href={`/clients/${r.client.id}/payroll`}>
+                            Manage
+                          </Link>
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>

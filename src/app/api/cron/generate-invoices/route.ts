@@ -11,13 +11,15 @@ export const maxDuration = 60;
  * Vercel Cron target, scheduled for the 1st of the month (see
  * vercel.json). Generates one invoice per active subscription for its
  * current billing period, plus a line per unbilled government_fees row
- * for that client (build spec §7.8, §5.1).
+ * for that client (build spec §7.8, §5.1), plus transaction/employee
+ * overage lines now that Phase 2 (receipts) and Phase 4 (payroll) data
+ * exist to count against `plans.txn_limit`/`employee_limit`.
  *
- * Transaction/employee overage lines are NOT generated here — there is no
- * bookkeeping (Phase 2) or payroll (Phase 4) data yet to count overages
- * against. Wire that up when those phases land; until then a plan's
- * `txn_limit`/`employee_limit` cannot be exceeded because nothing counts
- * against them.
+ * Overage counting uses the calendar month of the subscription's
+ * current_period_start as the period key — approximate for a
+ * subscription whose billing cycle doesn't align to calendar months
+ * (bookkeeping transaction counts are stamped per calendar month by
+ * `receipts.counted_period`, not per billing cycle).
  */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -34,13 +36,33 @@ export async function GET(request: Request) {
   const { data: subscriptions, error: subsError } = await supabase
     .from("subscriptions")
     .select(
-      "*, plans(price_monthly, price_annual_monthly), clients(business_name)",
+      "*, plans(price_monthly, price_annual_monthly, txn_limit, employee_limit, features), clients(business_name)",
     )
     .eq("status", "active");
 
   if (subsError) {
     return NextResponse.json({ error: subsError.message }, { status: 500 });
   }
+
+  const [{ data: txnOverageFee }, { data: employeeOverageFee }] =
+    await Promise.all([
+      supabase
+        .from("billing_config")
+        .select("amount")
+        .eq("key", "bookkeeping_txn_overage")
+        .is("effective_to", null)
+        .order("effective_from", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("billing_config")
+        .select("amount")
+        .eq("key", "payroll_employee_overage")
+        .is("effective_to", null)
+        .order("effective_from", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
   const results: Array<{
     subscriptionId: string;
@@ -53,6 +75,9 @@ export async function GET(request: Request) {
     const plan = sub.plans as unknown as {
       price_monthly: string;
       price_annual_monthly: string;
+      txn_limit: number | null;
+      employee_limit: number | null;
+      features: Record<string, unknown>;
     } | null;
     if (!plan) {
       results.push({ subscriptionId: sub.id, error: "Plan not found" });
@@ -147,6 +172,47 @@ export async function GET(request: Request) {
         .from("government_fees")
         .update({ billed_invoice_id: invoice.id })
         .eq("id", fee.id);
+    }
+
+    const overagePeriod = sub.current_period_start.slice(0, 7);
+
+    if (plan.txn_limit !== null && txnOverageFee) {
+      const { data: txnCount } = await supabase.rpc(
+        "count_receipts_for_period",
+        { p_client_id: sub.client_id, p_period: overagePeriod },
+      );
+      const overage = Math.max(0, (txnCount ?? 0) - plan.txn_limit);
+      if (overage > 0) {
+        await supabase.from("invoice_lines").insert({
+          invoice_id: invoice.id,
+          kind: "txn_overage",
+          description: `Bookkeeping transactions over plan limit (${overagePeriod}, ${overage} over ${plan.txn_limit})`,
+          qty: String(overage),
+          unit_price: txnOverageFee.amount,
+        });
+      }
+    }
+
+    if (
+      plan.employee_limit !== null &&
+      plan.features?.payroll_locked !== true &&
+      employeeOverageFee
+    ) {
+      const { count: employeeCount } = await supabase
+        .from("employees")
+        .select("id", { count: "exact", head: true })
+        .eq("client_id", sub.client_id)
+        .eq("status", "active");
+      const overage = Math.max(0, (employeeCount ?? 0) - plan.employee_limit);
+      if (overage > 0) {
+        await supabase.from("invoice_lines").insert({
+          invoice_id: invoice.id,
+          kind: "employee_overage",
+          description: `Employees over plan limit (${overagePeriod}, ${overage} over ${plan.employee_limit})`,
+          qty: String(overage),
+          unit_price: employeeOverageFee.amount,
+        });
+      }
     }
 
     const nextStart = new Date(sub.current_period_end);
