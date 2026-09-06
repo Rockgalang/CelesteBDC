@@ -1,24 +1,29 @@
-import type { LucideIcon } from "lucide-react";
-import {
-  CameraIcon,
-  FileTextIcon,
-  HomeIcon,
-  LandmarkIcon,
-  LayoutDashboardIcon,
-  MailIcon,
-  ReceiptIcon,
-  ScanSearchIcon,
-  UsersIcon,
-  UsersRoundIcon,
-  WorkflowIcon,
-} from "lucide-react";
-
 import type { UserRole } from "@/lib/supabase/types";
+
+// icon is a string key (resolved to a component inside the client-side
+// SidebarNav) rather than a LucideIcon component reference — passing an
+// actual component/function value from this Server Component data through
+// a Server Component (the (app) layout) into a Client Component
+// (SidebarNav) trips React's "Functions cannot be passed directly to
+// Client Components" serialization error. A string crosses that boundary
+// fine.
+export type NavIconKey =
+  | "LayoutDashboardIcon"
+  | "HomeIcon"
+  | "UsersIcon"
+  | "WorkflowIcon"
+  | "ReceiptIcon"
+  | "FileTextIcon"
+  | "CameraIcon"
+  | "ScanSearchIcon"
+  | "LandmarkIcon"
+  | "UsersRoundIcon"
+  | "MailIcon";
 
 export type NavItem = {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: NavIconKey;
   roles: UserRole[];
 };
 
@@ -26,67 +31,67 @@ export const NAV_ITEMS: NavItem[] = [
   {
     href: "/dashboard",
     label: "Ops Cockpit",
-    icon: LayoutDashboardIcon,
+    icon: "LayoutDashboardIcon",
     roles: ["owner", "staff"],
   },
   {
     href: "/dashboard",
     label: "Home",
-    icon: HomeIcon,
+    icon: "HomeIcon",
     roles: ["client_admin", "client_user"],
   },
   {
     href: "/clients",
     label: "Clients",
-    icon: UsersIcon,
+    icon: "UsersIcon",
     roles: ["owner", "staff"],
   },
   {
     href: "/registrations",
     label: "Registrations",
-    icon: WorkflowIcon,
+    icon: "WorkflowIcon",
     roles: ["owner", "staff"],
   },
   {
     href: "/invoices",
     label: "Invoices",
-    icon: ReceiptIcon,
+    icon: "ReceiptIcon",
     roles: ["owner", "staff", "client_admin"],
   },
   {
     href: "/documents",
     label: "Documents",
-    icon: FileTextIcon,
+    icon: "FileTextIcon",
     roles: ["client_admin", "client_user"],
   },
   {
     href: "/receipts",
     label: "Receipts",
-    icon: CameraIcon,
+    icon: "CameraIcon",
     roles: ["client_admin", "client_user"],
   },
   {
     href: "/receipts/review",
     label: "Receipt review",
-    icon: ScanSearchIcon,
+    icon: "ScanSearchIcon",
     roles: ["owner", "staff"],
   },
   {
     href: "/tax",
     label: "Tax",
-    icon: LandmarkIcon,
+    icon: "LandmarkIcon",
     roles: ["client_admin", "client_user"],
   },
   {
     href: "/payroll",
     label: "Payroll",
-    icon: UsersRoundIcon,
+    icon: "UsersRoundIcon",
     roles: ["owner", "staff"],
   },
   {
     href: "/settings/email-templates",
     label: "Email templates",
-    icon: MailIcon,
+    icon: "MailIcon",
     roles: ["owner"],
   },
 ];
