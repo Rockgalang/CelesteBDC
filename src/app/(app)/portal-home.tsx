@@ -3,6 +3,7 @@ import { FileTextIcon, ReceiptIcon, WorkflowIcon } from "lucide-react";
 
 import { JobStatusBadge } from "@/app/(app)/registrations/job-status-badge";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPeso } from "@/lib/format";
 import { money, ZERO } from "@/lib/money";
@@ -37,7 +38,7 @@ export async function PortalHome({ profile }: { profile: CurrentProfile }) {
   ] = await Promise.all([
     supabase
       .from("clients")
-      .select("business_name, status")
+      .select("business_name, status, intake_responses")
       .eq("id", profile.client_id)
       .single(),
     supabase
@@ -61,8 +62,42 @@ export async function PortalHome({ profile }: { profile: CurrentProfile }) {
     ZERO,
   );
 
+  const intake = (client?.intake_responses ?? {}) as Record<string, unknown>;
+  const needsBusinessDetails =
+    profile.role === "client_admin" && !intake._business_details_completed_at;
+  const needsQuestionnaire =
+    profile.role === "client_admin" && !intake._questionnaire_completed_at;
+  const showSetupBanner =
+    client?.status === "onboarding" &&
+    (needsBusinessDetails || needsQuestionnaire);
+
   return (
     <div className="space-y-6">
+      {showSetupBanner && (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+            <div>
+              <p className="font-medium">Finish setting up your business</p>
+              <p className="text-muted-foreground text-sm">
+                {needsBusinessDetails
+                  ? "A few business details are still missing."
+                  : "Just the intake questionnaire left."}
+              </p>
+            </div>
+            <Button asChild size="sm">
+              <Link
+                href={
+                  needsBusinessDetails
+                    ? "/onboard/business"
+                    : "/onboard/questionnaire"
+                }
+              >
+                Continue setup
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
           {client?.business_name ?? "Your business"}

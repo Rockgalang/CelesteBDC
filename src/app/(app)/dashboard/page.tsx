@@ -1,9 +1,18 @@
+import { redirect } from "next/navigation";
+
 import { OpsCockpit } from "@/app/(app)/ops-cockpit";
 import { PortalHome } from "@/app/(app)/portal-home";
 import { getCurrentProfile, isInternalRole } from "@/lib/auth/current-profile";
 
 export default async function HomePage() {
   const profile = await getCurrentProfile();
+
+  // A client_user with no client yet hasn't registered a business —
+  // send them into the self-registration wizard instead of the empty
+  // portal home.
+  if (profile.role === "client_user" && !profile.client_id) {
+    redirect("/onboard");
+  }
 
   if (isInternalRole(profile.role)) {
     return (
