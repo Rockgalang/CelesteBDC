@@ -104,6 +104,7 @@ export type ClientsRow = {
   status: ClientStatus;
   onboarded_at: string | null;
   cancelled_at: string | null;
+  intake_responses: Record<string, unknown>;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -316,6 +317,20 @@ export type PaymentsRow = {
   proof_document_id: string | null;
   status: PaymentStatus;
   confirmed_by: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type PaymentChannelsRow = {
+  id: string;
+  method: PaymentMethod;
+  label: string;
+  account_name: string | null;
+  account_number: string | null;
+  qr_image_data_url: string | null;
+  instructions: string | null;
+  active: boolean;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -776,6 +791,8 @@ type EmployeesInsert = Pick<
   Partial<Omit<EmployeesRow, "client_id" | "full_name" | "monthly_rate">>;
 type PayrollRunsInsert = Pick<PayrollRunsRow, "client_id" | "period"> &
   Partial<Omit<PayrollRunsRow, "client_id" | "period">>;
+type PaymentChannelsInsert = Pick<PaymentChannelsRow, "method" | "label"> &
+  Partial<Omit<PaymentChannelsRow, "method" | "label" | "id">>;
 type PayslipsInsert = Pick<
   PayslipsRow,
   "payroll_run_id" | "employee_id" | "client_id"
@@ -942,6 +959,11 @@ export type Database = {
         PayslipsInsert,
         Partial<Omit<PayslipsRow, "id" | "gross_pay" | "net_pay">>
       >;
+      payment_channels: TableDef<
+        PaymentChannelsRow,
+        PaymentChannelsInsert,
+        Partial<Omit<PaymentChannelsRow, "id">>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
@@ -1033,6 +1055,16 @@ export type Database = {
           p_cash_account_id: string;
         };
         Returns: PayrollRunsRow;
+      };
+      self_register_business: {
+        Args: {
+          p_business_name: string;
+          p_entity_type: EntityType;
+          p_tax_type: TaxType;
+          p_plan_code: string;
+          p_cycle: SubscriptionCycle;
+        };
+        Returns: ClientsRow;
       };
     };
     Enums: {
