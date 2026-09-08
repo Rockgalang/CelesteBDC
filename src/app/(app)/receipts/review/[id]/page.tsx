@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { ReviewPanel } from "@/app/(app)/receipts/review/[id]/review-panel";
+import { ClientBackLink } from "@/components/workspace/client-back-link";
 import { requireRole } from "@/lib/auth/current-profile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -48,10 +49,10 @@ export default async function ReceiptReviewDetailPage({
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <p className="text-muted-foreground text-sm">
-          {client?.business_name}
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        {client && (
+          <ClientBackLink clientId={client.id} businessName={client.business_name} />
+        )}
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
           Review receipt
         </h1>
       </div>

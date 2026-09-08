@@ -6,6 +6,7 @@ import { FeesPanel } from "@/app/(app)/registrations/[id]/fees-panel";
 import { StagesTimeline } from "@/app/(app)/registrations/[id]/stages-timeline";
 import { JobStatusBadge } from "@/app/(app)/registrations/job-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClientBackLink } from "@/components/workspace/client-back-link";
 import { requireRole } from "@/lib/auth/current-profile";
 import { formatManila } from "@/lib/format";
 import { JOB_TYPE_LABELS } from "@/lib/validation/registration";
@@ -52,8 +53,10 @@ export default async function RegistrationJobPage({
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <p className="text-muted-foreground text-sm">{client?.business_name}</p>
-        <div className="flex items-center gap-3">
+        {client && (
+          <ClientBackLink clientId={client.id} businessName={client.business_name} />
+        )}
+        <div className="mt-1 flex items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">
             {JOB_TYPE_LABELS[job.job_type]}
             {job.is_renewal && " (Renewal)"}

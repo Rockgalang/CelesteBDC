@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ClientBackLink } from "@/components/workspace/client-back-link";
 import {
   Table,
   TableBody,
@@ -66,8 +67,12 @@ export default async function InvoiceDetailPage({
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <p className="text-muted-foreground text-sm">{client?.business_name}</p>
-        <div className="flex items-center gap-3">
+        {internal && client ? (
+          <ClientBackLink clientId={client.id} businessName={client.business_name} />
+        ) : (
+          <p className="text-muted-foreground text-sm">{client?.business_name}</p>
+        )}
+        <div className="mt-1 flex items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">
             {invoice.number ?? "Draft invoice"}
           </h1>
