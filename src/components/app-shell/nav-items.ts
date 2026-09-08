@@ -20,7 +20,8 @@ export type NavIconKey =
   | "UsersRoundIcon"
   | "MailIcon"
   | "QrCodeIcon"
-  | "TableIcon";
+  | "TableIcon"
+  | "TrendingUpIcon";
 
 export type NavItem = {
   href: string;
@@ -76,6 +77,12 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/reports",
     label: "Reports",
     icon: "TableIcon",
+    roles: ["client_admin", "client_user"],
+  },
+  {
+    href: "/financials",
+    label: "Financials",
+    icon: "TrendingUpIcon",
     roles: ["client_admin", "client_user"],
   },
   {

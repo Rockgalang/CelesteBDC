@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { queueNotificationToClientAdmins } from "@/lib/notifications/queue";
 import { runRenewalReminders } from "@/lib/renewals/reminders";
+import { runReportReminders } from "@/lib/reports/reminders";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const maxDuration = 60;
@@ -30,9 +31,10 @@ const SUSPEND_AT_DAY = 22;
  * here; this route only maintains subscriptions.status as the source of
  * truth for those checks.
  *
- * Also runs the renewal-reminder sweep (build spec §8, Phase 5) — see
- * src/lib/renewals/reminders.ts for why it lives here instead of its own
- * cron entry.
+ * Also runs the renewal-reminder sweep (build spec §8, Phase 5) and the
+ * sales/expense report-upload reminder sweep — see
+ * src/lib/renewals/reminders.ts and src/lib/reports/reminders.ts for why
+ * they live here instead of their own cron entries.
  */
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -115,6 +117,7 @@ export async function GET(request: Request) {
   }
 
   const renewalReminders = await runRenewalReminders(supabase);
+  const reportReminders = await runReportReminders(supabase);
 
-  return NextResponse.json({ swept: results, renewalReminders });
+  return NextResponse.json({ swept: results, renewalReminders, reportReminders });
 }
