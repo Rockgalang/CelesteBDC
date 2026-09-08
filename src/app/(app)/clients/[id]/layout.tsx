@@ -34,6 +34,7 @@ export default async function ClientWorkspaceLayout({
     { href: `/clients/${id}/files`, label: "Client's Files" },
     { href: `/clients/${id}/books`, label: "Books" },
     { href: `/clients/${id}/accounting`, label: "Accounting" },
+    { href: `/clients/${id}/products`, label: "Products & Services" },
     { href: `/clients/${id}/tax`, label: "Tax" },
     { href: `/clients/${id}/payroll`, label: "Payroll" },
     { href: `/clients/${id}/invoices`, label: "Subscription & Billing" },

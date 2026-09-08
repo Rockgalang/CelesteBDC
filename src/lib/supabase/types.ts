@@ -622,6 +622,43 @@ export type ExtraRegistrationRequestsRow = {
   updated_at: string;
 };
 
+export type ProductKind = "product" | "service";
+export type InventoryMovementType =
+  | "purchase"
+  | "sale"
+  | "adjustment"
+  | "initial";
+
+export type ProductsServicesRow = {
+  id: string;
+  client_id: string;
+  sku: string | null;
+  name: string;
+  description: string | null;
+  kind: ProductKind;
+  unit_price: string;
+  cost_price: string | null;
+  track_inventory: boolean;
+  quantity_on_hand: string;
+  revenue_account_id: string | null;
+  cogs_account_id: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type InventoryMovementsRow = {
+  id: string;
+  product_id: string;
+  client_id: string;
+  movement_type: InventoryMovementType;
+  quantity: string;
+  note: string | null;
+  created_at: string;
+  created_by: string | null;
+};
+
 export type EmployeesRow = {
   id: string;
   client_id: string;
@@ -871,6 +908,21 @@ type ReceiptsInsert = Pick<
       "client_id" | "storage_path" | "mime" | "bytes" | "sha256"
     >
   >;
+type ProductsServicesInsert = Pick<
+  ProductsServicesRow,
+  "client_id" | "name"
+> &
+  Partial<Omit<ProductsServicesRow, "client_id" | "name" | "id">>;
+type InventoryMovementsInsert = Pick<
+  InventoryMovementsRow,
+  "product_id" | "client_id" | "movement_type" | "quantity"
+> &
+  Partial<
+    Omit<
+      InventoryMovementsRow,
+      "product_id" | "client_id" | "movement_type" | "quantity" | "id"
+    >
+  >;
 type EmployeesInsert = Pick<
   EmployeesRow,
   "client_id" | "full_name" | "monthly_rate"
@@ -1066,6 +1118,16 @@ export type Database = {
         ReceiptsInsert,
         Partial<Omit<ReceiptsRow, "id">>
       >;
+      products_services: TableDef<
+        ProductsServicesRow,
+        ProductsServicesInsert,
+        Partial<Omit<ProductsServicesRow, "id">>
+      >;
+      inventory_movements: TableDef<
+        InventoryMovementsRow,
+        InventoryMovementsInsert,
+        never
+      >;
       employees: TableDef<
         EmployeesRow,
         EmployeesInsert,
@@ -1244,6 +1306,15 @@ export type Database = {
         Args: { p_id: string; p_accept: boolean };
         Returns: ExtraRegistrationRequestsRow;
       };
+      record_inventory_movement: {
+        Args: {
+          p_product_id: string;
+          p_movement_type: InventoryMovementType;
+          p_quantity: number;
+          p_note: string | null;
+        };
+        Returns: ProductsServicesRow;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -1278,6 +1349,8 @@ export type Database = {
       ledger_import_status: LedgerImportStatus;
       ledger_import_row_status: LedgerImportRowStatus;
       extra_registration_status: ExtraRegistrationStatus;
+      product_kind: ProductKind;
+      inventory_movement_type: InventoryMovementType;
     };
   };
 };
