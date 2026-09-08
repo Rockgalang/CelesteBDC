@@ -64,6 +64,7 @@ export const MAX_RECEIPT_UPLOAD_BYTES = 15 * 1024 * 1024; // 15MB
 
 export const uploadReceiptSchema = z.object({
   clientId: z.string().uuid(),
+  entryType: z.enum(["sale", "expense"]).default("expense"),
 });
 export type UploadReceiptInput = z.infer<typeof uploadReceiptSchema>;
 

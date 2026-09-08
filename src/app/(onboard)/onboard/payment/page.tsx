@@ -39,11 +39,7 @@ export default async function OnboardPaymentPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase
-      .from("payment_channels")
-      .select("*")
-      .eq("active", true)
-      .eq("method", "gcash"),
+    supabase.from("payment_channels").select("*").eq("active", true),
   ]);
 
   const [{ data: lines }, { data: payments }] = await Promise.all([
@@ -63,10 +59,6 @@ export default async function OnboardPaymentPage() {
       : Promise.resolve({ data: [] }),
   ]);
 
-  const channel = channels?.[0];
-  const alreadyPaid =
-    invoice && ["paid", "partially_paid"].includes(invoice.status);
-
   return (
     <div className="space-y-6">
       <div>
@@ -74,58 +66,11 @@ export default async function OnboardPaymentPage() {
           Pay your first invoice
         </h1>
         <p className="text-muted-foreground text-sm">
-          Pay via GCash and upload your proof of payment. Once we confirm it,
-          you&apos;re set — meanwhile, continue to the next steps to finish
-          your profile.
+          Pick how you paid and upload your proof of payment. Once we confirm
+          it, you&apos;re set — meanwhile, continue to the next steps to
+          finish your profile.
         </p>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>How to pay</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          {channel ? (
-            <>
-              {channel.qr_image_data_url && (
-                <div className="flex justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- inline data URL, next/image can't optimize it */}
-                  <img
-                    src={channel.qr_image_data_url}
-                    alt="GCash QR code"
-                    className="h-56 w-56 rounded-md border object-contain"
-                  />
-                </div>
-              )}
-              <div className="space-y-1">
-                {channel.account_name && (
-                  <p>
-                    <span className="text-muted-foreground">Account name:</span>{" "}
-                    <span className="font-medium">{channel.account_name}</span>
-                  </p>
-                )}
-                {channel.account_number && (
-                  <p>
-                    <span className="text-muted-foreground">
-                      GCash number:
-                    </span>{" "}
-                    <span className="font-medium">{channel.account_number}</span>
-                  </p>
-                )}
-              </div>
-              {channel.instructions && (
-                <p className="text-muted-foreground">{channel.instructions}</p>
-              )}
-            </>
-          ) : (
-            <p className="text-muted-foreground">
-              Payment details haven&apos;t been set up yet — contact Celeste
-              BDC for GCash payment instructions, or continue filling out
-              your profile and pay once you have them.
-            </p>
-          )}
-        </CardContent>
-      </Card>
 
       {invoice ? (
         <>
@@ -165,9 +110,11 @@ export default async function OnboardPaymentPage() {
           <PaymentPanel
             invoiceId={invoice.id}
             clientId={invoice.client_id}
+            invoiceTotal={invoice.total}
             payments={payments ?? []}
+            channels={channels ?? []}
             canConfirm={false}
-            canSubmit={!alreadyPaid}
+            canSubmit
           />
         </>
       ) : (

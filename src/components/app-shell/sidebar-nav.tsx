@@ -13,6 +13,8 @@ import {
   QrCodeIcon,
   ReceiptIcon,
   ScanSearchIcon,
+  TableIcon,
+  TrendingUpIcon,
   UsersIcon,
   UsersRoundIcon,
   WorkflowIcon,
@@ -37,6 +39,8 @@ const ICONS: Record<NavIconKey, LucideIcon> = {
   UsersRoundIcon,
   MailIcon,
   QrCodeIcon,
+  TableIcon,
+  TrendingUpIcon,
 };
 
 export function SidebarNav({ items }: { items: NavItem[] }) {

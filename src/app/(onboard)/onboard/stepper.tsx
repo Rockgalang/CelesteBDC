@@ -9,6 +9,7 @@ const STEPS = [
   { href: "/onboard", label: "Plan & business" },
   { href: "/onboard/payment", label: "Payment" },
   { href: "/onboard/business", label: "Business details" },
+  { href: "/onboard/permits", label: "Permits" },
   { href: "/onboard/questionnaire", label: "Questionnaire" },
 ] as const;
 

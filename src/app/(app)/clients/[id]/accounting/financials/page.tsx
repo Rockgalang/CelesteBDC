@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requireRole } from "@/lib/auth/current-profile";
+import { FS_DISCLAIMER } from "@/lib/copy/disclaimers";
 import { formatPeso } from "@/lib/format";
 import { money, ZERO, type Money } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
@@ -309,8 +310,8 @@ export default async function FinancialsPage({
         </CardContent>
       </Card>
 
-      <p className="text-muted-foreground text-center text-xs">
-        Compiled — Management Accounts. Not audited.
+      <p className="text-muted-foreground mx-auto max-w-2xl text-center text-xs">
+        {FS_DISCLAIMER}
       </p>
     </div>
   );

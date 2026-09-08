@@ -30,6 +30,7 @@ export async function uploadReceiptAction(
 
   const parsed = uploadReceiptSchema.safeParse({
     clientId: formData.get("clientId"),
+    entryType: formData.get("entryType") || undefined,
   });
   if (!parsed.success) {
     return {
@@ -65,6 +66,7 @@ export async function uploadReceiptAction(
       bytes: file.size,
       sha256,
       status: "processing",
+      entry_type: parsed.data.entryType,
     })
     .select("id")
     .single();
@@ -107,6 +109,7 @@ export async function uploadReceiptAction(
 
   revalidatePath("/receipts");
   revalidatePath("/receipts/review");
+  revalidatePath("/reports");
   return { ok: true, receiptId: receipt.id };
 }
 

@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { FS_DISCLAIMER_SHORT } from "@/lib/copy/disclaimers";
 import { formatPeso } from "@/lib/format";
 import { money } from "@/lib/money";
 import { CYCLES } from "@/lib/validation/onboarding";
@@ -173,6 +174,7 @@ export function RegisterBusinessForm({ plans }: { plans: PlansRow[] }) {
               </p>
             )}
           </div>
+          <p className="text-muted-foreground text-xs">{FS_DISCLAIMER_SHORT}</p>
         </CardContent>
       </Card>
 
