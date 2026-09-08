@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FS_DISCLAIMER_SHORT } from "@/lib/copy/disclaimers";
 import { formatPeso } from "@/lib/format";
 import { money } from "@/lib/money";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -250,6 +251,9 @@ export default async function LandingPage() {
               );
             })}
           </div>
+          <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-center text-xs">
+            {FS_DISCLAIMER_SHORT}
+          </p>
         </section>
       )}
 

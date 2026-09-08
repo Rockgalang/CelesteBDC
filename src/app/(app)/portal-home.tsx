@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { FileTextIcon, ReceiptIcon, WorkflowIcon } from "lucide-react";
 
-import { JobStatusBadge } from "@/app/(app)/registrations/job-status-badge";
+import { ComplianceChecklist } from "@/app/(app)/compliance-checklist";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPeso } from "@/lib/format";
 import { money, ZERO } from "@/lib/money";
-import { JOB_TYPE_LABELS } from "@/lib/validation/registration";
 import { createClient } from "@/lib/supabase/server";
 import type { CurrentProfile } from "@/lib/auth/current-profile";
 
@@ -65,11 +64,18 @@ export async function PortalHome({ profile }: { profile: CurrentProfile }) {
   const intake = (client?.intake_responses ?? {}) as Record<string, unknown>;
   const needsBusinessDetails =
     profile.role === "client_admin" && !intake._business_details_completed_at;
+  const needsPermits =
+    profile.role === "client_admin" && !intake._permits_completed_at;
   const needsQuestionnaire =
     profile.role === "client_admin" && !intake._questionnaire_completed_at;
   const showSetupBanner =
     client?.status === "onboarding" &&
-    (needsBusinessDetails || needsQuestionnaire);
+    (needsBusinessDetails || needsPermits || needsQuestionnaire);
+  const nextSetupStep = needsBusinessDetails
+    ? { href: "/onboard/business", label: "A few business details are still missing." }
+    : needsPermits
+      ? { href: "/onboard/permits", label: "Add your business permits next." }
+      : { href: "/onboard/questionnaire", label: "Just the intake questionnaire left." };
 
   return (
     <div className="space-y-6">
@@ -79,21 +85,11 @@ export async function PortalHome({ profile }: { profile: CurrentProfile }) {
             <div>
               <p className="font-medium">Finish setting up your business</p>
               <p className="text-muted-foreground text-sm">
-                {needsBusinessDetails
-                  ? "A few business details are still missing."
-                  : "Just the intake questionnaire left."}
+                {nextSetupStep.label}
               </p>
             </div>
             <Button asChild size="sm">
-              <Link
-                href={
-                  needsBusinessDetails
-                    ? "/onboard/business"
-                    : "/onboard/questionnaire"
-                }
-              >
-                Continue setup
-              </Link>
+              <Link href={nextSetupStep.href}>Continue setup</Link>
             </Button>
           </CardContent>
         </Card>
@@ -155,31 +151,7 @@ export async function PortalHome({ profile }: { profile: CurrentProfile }) {
         )}
       </div>
 
-      {jobs && jobs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Registration status</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {jobs.map((job) => (
-              <div
-                key={job.id}
-                className="flex items-center justify-between text-sm"
-              >
-                <div>
-                  <p className="font-medium">{JOB_TYPE_LABELS[job.job_type]}</p>
-                  {job.current_stage && (
-                    <p className="text-muted-foreground text-xs">
-                      {job.current_stage}
-                    </p>
-                  )}
-                </div>
-                <JobStatusBadge status={job.status} />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <ComplianceChecklist clientId={profile.client_id} />
     </div>
   );
 }

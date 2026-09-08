@@ -35,7 +35,7 @@ export default async function InvoiceDetailPage({
   const { id } = await params;
 
   const supabase = await createClient();
-  const [{ data: invoice }, { data: lines }, { data: payments }] =
+  const [{ data: invoice }, { data: lines }, { data: payments }, { data: channels }] =
     await Promise.all([
       supabase
         .from("invoices")
@@ -52,6 +52,7 @@ export default async function InvoiceDetailPage({
         .select("*")
         .eq("invoice_id", id)
         .order("created_at"),
+      supabase.from("payment_channels").select("*").eq("active", true),
     ]);
 
   if (!invoice) notFound();
@@ -121,7 +122,9 @@ export default async function InvoiceDetailPage({
       <PaymentPanel
         invoiceId={invoice.id}
         clientId={invoice.client_id}
+        invoiceTotal={invoice.total}
         payments={payments ?? []}
+        channels={channels ?? []}
         canConfirm={internal}
         canSubmit={profile.role === "client_admin"}
       />

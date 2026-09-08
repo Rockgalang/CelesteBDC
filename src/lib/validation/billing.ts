@@ -9,9 +9,7 @@ export const PAYMENT_METHODS = [
 
 export const submitPaymentSchema = z.object({
   invoiceId: z.string().uuid(),
-  amount: z.coerce.number().positive("Amount must be greater than zero."),
-  method: z.enum(PAYMENT_METHODS),
-  reference: z.string().trim().optional(),
-  proofDocumentId: z.string().uuid().optional(),
+  channelId: z.string().uuid("Choose which channel you paid to."),
+  proofDocumentId: z.string().uuid("Upload your proof of payment."),
 });
 export type SubmitPaymentInput = z.infer<typeof submitPaymentSchema>;

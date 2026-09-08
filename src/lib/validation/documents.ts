@@ -10,6 +10,7 @@ export const DOCUMENT_CATEGORIES = [
   "payment_proof",
   "other",
 ] as const;
+export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number];
 
 export const uploadDocumentSchema = z.object({
   clientId: z.string().uuid(),

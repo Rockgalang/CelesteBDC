@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import type { ActionResult } from "@/app/(auth)/actions";
 import { getCurrentProfile } from "@/lib/auth/current-profile";
+import { money, toDbString, ZERO } from "@/lib/money";
 import { queueNotificationToClientAdmins } from "@/lib/notifications/queue";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -13,7 +14,10 @@ import {
 
 /** client_admin submits proof of payment. RLS (payments_insert_own_client_admin)
  * is the real authorization boundary here — this check just gives a clean
- * error message instead of a bare RLS rejection. */
+ * error message instead of a bare RLS rejection. The client no longer types
+ * an amount, method, or reference: amount is the invoice's remaining
+ * balance and method comes from the channel they say they paid to, both
+ * derived server-side so a client can't misreport either. */
 export async function submitPaymentAction(
   input: SubmitPaymentInput,
 ): Promise<ActionResult> {
@@ -34,12 +38,48 @@ export async function submitPaymentAction(
   }
 
   const supabase = await createClient();
+
+  const [{ data: invoice }, { data: confirmedPayments }, { data: channel }] =
+    await Promise.all([
+      supabase
+        .from("invoices")
+        .select("id, total")
+        .eq("id", parsed.data.invoiceId)
+        .single(),
+      supabase
+        .from("payments")
+        .select("amount")
+        .eq("invoice_id", parsed.data.invoiceId)
+        .eq("status", "confirmed"),
+      supabase
+        .from("payment_channels")
+        .select("id, method, active")
+        .eq("id", parsed.data.channelId)
+        .single(),
+    ]);
+
+  if (!invoice) {
+    return { ok: false, error: "Invoice not found." };
+  }
+  if (!channel || !channel.active) {
+    return { ok: false, error: "That payment channel is no longer available." };
+  }
+
+  const confirmedTotal = (confirmedPayments ?? []).reduce(
+    (sum, p) => sum.plus(money(p.amount)),
+    ZERO,
+  );
+  const remaining = money(invoice.total).minus(confirmedTotal);
+  if (remaining.lte(0)) {
+    return { ok: false, error: "This invoice is already fully paid." };
+  }
+
   const { error } = await supabase.from("payments").insert({
     invoice_id: parsed.data.invoiceId,
-    amount: parsed.data.amount.toFixed(2),
-    method: parsed.data.method,
-    reference: parsed.data.reference || null,
-    proof_document_id: parsed.data.proofDocumentId || null,
+    amount: toDbString(remaining),
+    method: channel.method,
+    channel_id: channel.id,
+    proof_document_id: parsed.data.proofDocumentId,
     status: "submitted",
   });
 

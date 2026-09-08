@@ -315,6 +315,7 @@ export type PaymentsRow = {
   reference: string | null;
   paid_at: string | null;
   proof_document_id: string | null;
+  channel_id: string | null;
   status: PaymentStatus;
   confirmed_by: string | null;
   created_at: string;
@@ -1055,6 +1056,10 @@ export type Database = {
           p_cash_account_id: string;
         };
         Returns: PayrollRunsRow;
+      };
+      request_client_registration_job: {
+        Args: { p_job_type: JobType };
+        Returns: RegistrationJobsRow;
       };
       self_register_business: {
         Args: {

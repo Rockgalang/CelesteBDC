@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/app/(auth)/actions";
 import { getCurrentProfile } from "@/lib/auth/current-profile";
 import { createClient } from "@/lib/supabase/server";
+import type { JobType } from "@/lib/supabase/types";
 import {
   businessDetailsSchema,
   intakeQuestionnaireSchema,
@@ -98,6 +99,60 @@ export async function updateBusinessDetailsAction(
   }
 
   revalidatePath("/onboard/business");
+  revalidatePath("/dashboard");
+  redirect("/onboard/permits");
+}
+
+export async function requestPermitRegistrationAction(
+  jobType: JobType,
+): Promise<ActionResult> {
+  const profile = await getCurrentProfile();
+  if (profile.role !== "client_admin" || !profile.client_id) {
+    return { ok: false, error: "Only a client admin can request this." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("request_client_registration_job", {
+    p_job_type: jobType,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/onboard/permits");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+export async function completePermitsStepAction(): Promise<ActionResult> {
+  const profile = await getCurrentProfile();
+  if (profile.role !== "client_admin" || !profile.client_id) {
+    return { ok: false, error: "Only a client admin can continue here." };
+  }
+
+  const supabase = await createClient();
+  const { data: current } = await supabase
+    .from("clients")
+    .select("intake_responses")
+    .eq("id", profile.client_id)
+    .single();
+
+  const { error } = await supabase
+    .from("clients")
+    .update({
+      intake_responses: {
+        ...(current?.intake_responses ?? {}),
+        _permits_completed_at: new Date().toISOString(),
+      },
+    })
+    .eq("id", profile.client_id);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/onboard/permits");
   revalidatePath("/dashboard");
   redirect("/onboard/questionnaire");
 }
