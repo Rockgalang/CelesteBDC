@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { requireRole } from "@/lib/auth/current-profile";
+import { getCurrentProfile } from "@/lib/auth/current-profile";
 import { FS_DISCLAIMER } from "@/lib/copy/disclaimers";
 import { formatPeso } from "@/lib/format";
 import { money, ZERO, type Money } from "@/lib/money";
@@ -42,7 +42,7 @@ export default async function FinancialsPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ period?: string }>;
 }) {
-  const profile = await requireRole("owner", "staff");
+  const profile = await getCurrentProfile();
   const { id } = await params;
   const { period: periodParam } = await searchParams;
   const period = periodParam || currentMonth();
@@ -50,7 +50,7 @@ export default async function FinancialsPage({
   const supabase = await createClient();
   const [{ data: client }, { data: periods }, { data: accounts }, { data: lines }] =
     await Promise.all([
-      supabase.from("clients").select("id, business_name").eq("id", id).single(),
+      supabase.from("clients").select("id").eq("id", id).single(),
       supabase
         .from("accounting_periods")
         .select("*")
@@ -148,13 +148,7 @@ export default async function FinancialsPage({
     .minus(expenseRowsToDate.reduce((s, r) => s.plus(r.net), ZERO));
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Financials — {client.business_name}
-        </h1>
-      </div>
-
+    <div className="space-y-6">
       <PeriodPanel
         clientId={id}
         period={period}

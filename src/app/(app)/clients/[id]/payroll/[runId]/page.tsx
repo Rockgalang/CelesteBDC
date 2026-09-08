@@ -1,11 +1,12 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { ArrowLeftIcon } from "lucide-react";
 
 import { PayslipRow } from "@/app/(app)/clients/[id]/payroll/[runId]/payslip-row";
 import { ProcessPanel } from "@/app/(app)/clients/[id]/payroll/[runId]/process-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireRole } from "@/lib/auth/current-profile";
 import { formatManila, formatPeso } from "@/lib/format";
 import { money, ZERO } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
@@ -17,7 +18,6 @@ export default async function PayrollRunDetailPage({
 }: {
   params: Promise<{ id: string; runId: string }>;
 }) {
-  await requireRole("owner", "staff");
   const { id, runId } = await params;
 
   const supabase = await createClient();
@@ -25,7 +25,7 @@ export default async function PayrollRunDetailPage({
     await Promise.all([
       supabase
         .from("payroll_runs")
-        .select("*, clients(business_name)")
+        .select("*")
         .eq("id", runId)
         .single(),
       supabase
@@ -43,7 +43,6 @@ export default async function PayrollRunDetailPage({
 
   if (!run) notFound();
 
-  const client = run.clients as unknown as { business_name: string } | null;
   const editable = run.status === "draft";
   const totalNet = (payslips ?? []).reduce(
     (sum, p) => sum.plus(money(p.net_pay)),
@@ -51,12 +50,18 @@ export default async function PayrollRunDetailPage({
   );
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <p className="text-muted-foreground text-sm">{client?.business_name}</p>
-        <div className="flex items-center gap-3">
+        <Link
+          href={`/clients/${id}/payroll`}
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+        >
+          <ArrowLeftIcon className="size-3.5" />
+          Payroll
+        </Link>
+        <div className="mt-1 flex items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Payroll — {run.period}
+            {run.period}
           </h1>
           <Badge variant={run.status === "processed" ? "success" : "secondary"}>
             {run.status}

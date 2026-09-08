@@ -13,20 +13,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { requireRole } from "@/lib/auth/current-profile";
+import { CLIENT_STATUS_VARIANT } from "@/lib/client-status";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Clients — Celeste.bdc" };
-
-const STATUS_VARIANT: Record<
-  string,
-  "secondary" | "success" | "warning" | "destructive"
-> = {
-  prospect: "secondary",
-  onboarding: "warning",
-  active: "success",
-  suspended: "warning",
-  cancelled: "destructive",
-};
 
 export default async function ClientsPage() {
   await requireRole("owner", "staff");
@@ -68,9 +58,12 @@ export default async function ClientsPage() {
             </TableHeader>
             <TableBody>
               {clients.map((c) => (
-                <TableRow key={c.id} className="cursor-pointer">
+                <TableRow
+                  key={c.id}
+                  className="hover:bg-muted/50 cursor-pointer transition-colors"
+                >
                   <TableCell>
-                    <Link href={`/clients/${c.id}`} className="hover:underline">
+                    <Link href={`/clients/${c.id}`} className="block hover:underline">
                       <div className="font-medium">{c.business_name}</div>
                       {c.trade_name && (
                         <div className="text-muted-foreground text-xs">
@@ -84,7 +77,10 @@ export default async function ClientsPage() {
                   </TableCell>
                   <TableCell>{c.city || "—"}</TableCell>
                   <TableCell>
-                    <Badge variant={STATUS_VARIANT[c.status] ?? "secondary"}>
+                    <Badge
+                      variant={CLIENT_STATUS_VARIANT[c.status] ?? "secondary"}
+                      className="capitalize"
+                    >
                       {c.status}
                     </Badge>
                   </TableCell>
