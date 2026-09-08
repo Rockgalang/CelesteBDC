@@ -16,7 +16,7 @@ import { formatManila } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { JOB_TYPE_LABELS } from "@/lib/validation/registration";
 
-export const metadata: Metadata = { title: "Registrations — Celeste.bdc" };
+export const metadata: Metadata = { title: "Client's files — Celeste.bdc" };
 
 export default async function ClientRegistrationsPage({
   params,

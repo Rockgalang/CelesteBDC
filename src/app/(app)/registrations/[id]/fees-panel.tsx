@@ -55,7 +55,7 @@ export function FeesPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Government fee ledger</CardTitle>
+        <CardTitle>Extra fee ledger</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {fees.length > 0 ? (

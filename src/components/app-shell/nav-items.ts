@@ -57,7 +57,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/invoices",
-    label: "Invoices",
+    label: "Payments",
     icon: "ReceiptIcon",
     roles: ["owner", "staff", "client_admin"],
   },
@@ -87,7 +87,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/receipts/review",
-    label: "Receipt review",
+    label: "Client Transactions",
     icon: "ScanSearchIcon",
     roles: ["owner", "staff"],
   },

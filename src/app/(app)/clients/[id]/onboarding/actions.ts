@@ -61,7 +61,7 @@ export async function selectPlanAction(
     return { ok: false, error: error.message };
   }
 
-  revalidatePath(`/clients/${parsed.data.clientId}/onboarding`);
+  revalidatePath(`/clients/${parsed.data.clientId}/profile`);
   return { ok: true };
 }
 
@@ -98,7 +98,7 @@ export async function signEngagementLetterAction(
     return { ok: false, error: error.message };
   }
 
-  revalidatePath(`/clients/${parsed.data.clientId}/onboarding`);
+  revalidatePath(`/clients/${parsed.data.clientId}/profile`);
   return { ok: true };
 }
 
@@ -117,7 +117,7 @@ export async function activateClientAction(
     return { ok: false, error: error.message };
   }
 
-  revalidatePath(`/clients/${clientId}/onboarding`);
+  revalidatePath(`/clients/${clientId}/profile`);
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/clients");
   return { ok: true };

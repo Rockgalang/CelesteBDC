@@ -26,17 +26,27 @@ const QUEUE_STATUSES: ReceiptStatus[] = [
   "ocr_failed",
 ];
 
-export default async function ReceiptReviewQueuePage() {
+export default async function ReceiptReviewQueuePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clientId?: string }>;
+}) {
   await requireRole("owner", "staff");
+  const { clientId } = await searchParams;
 
   const supabase = await createClient();
-  const { data: receipts } = await supabase
+  let query = supabase
     .from("receipts")
     .select("*, clients(id, business_name)")
     .in("status", QUEUE_STATUSES)
     .order("created_at", { ascending: true });
+  if (clientId) query = query.eq("client_id", clientId);
+  const { data: receipts } = await query;
 
   const rows = receipts ?? [];
+  const filteredClientName = rows[0]?.clients as unknown as
+    | { business_name: string }
+    | null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -45,7 +55,16 @@ export default async function ReceiptReviewQueuePage() {
           Receipt review
         </h1>
         <p className="text-muted-foreground text-sm">
-          {rows.length} receipt{rows.length === 1 ? "" : "s"} awaiting review.
+          {rows.length} receipt{rows.length === 1 ? "" : "s"} awaiting review
+          {clientId && filteredClientName
+            ? ` for ${filteredClientName.business_name}`
+            : ""}
+          .{" "}
+          {clientId && (
+            <Link href="/receipts/review" className="hover:underline">
+              Clear filter
+            </Link>
+          )}
         </p>
       </div>
 
