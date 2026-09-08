@@ -411,9 +411,20 @@ export type AuditLogRow = {
   created_at: string;
 };
 
+export type ChartOfAccountTemplateSetsRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  default_for_entity_types: EntityType[];
+  is_builtin: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
 export type ChartOfAccountTemplatesRow = {
   id: string;
-  template_group: "individual" | "corporate";
+  template_set_id: string;
   code: string;
   name: string;
   type: AccountType;
@@ -790,14 +801,19 @@ type EmailTemplatesInsert = Pick<
   "key" | "subject" | "body_text"
 > &
   Partial<Omit<EmailTemplatesRow, "key" | "subject" | "body_text">>;
+type ChartOfAccountTemplateSetsInsert = Pick<
+  ChartOfAccountTemplateSetsRow,
+  "name"
+> &
+  Partial<Omit<ChartOfAccountTemplateSetsRow, "name" | "id">>;
 type ChartOfAccountTemplatesInsert = Pick<
   ChartOfAccountTemplatesRow,
-  "template_group" | "code" | "name" | "type" | "normal_balance" | "sequence"
+  "template_set_id" | "code" | "name" | "type" | "normal_balance" | "sequence"
 > &
   Partial<
     Omit<
       ChartOfAccountTemplatesRow,
-      | "template_group"
+      | "template_set_id"
       | "code"
       | "name"
       | "type"
@@ -1005,6 +1021,11 @@ export type Database = {
         Partial<Omit<EmailTemplatesRow, "key">>
       >;
       audit_log: TableDef<AuditLogRow, never, never>;
+      chart_of_account_template_sets: TableDef<
+        ChartOfAccountTemplateSetsRow,
+        ChartOfAccountTemplateSetsInsert,
+        Partial<Omit<ChartOfAccountTemplateSetsRow, "id">>
+      >;
       chart_of_account_templates: TableDef<
         ChartOfAccountTemplatesRow,
         ChartOfAccountTemplatesInsert,
@@ -1119,8 +1140,16 @@ export type Database = {
         Returns: PaymentsRow;
       };
       create_default_chart_of_accounts: {
-        Args: { p_client_id: string };
+        Args: { p_client_id: string; p_template_set_id?: string | null };
         Returns: ChartOfAccountsRow[];
+      };
+      duplicate_chart_of_account_template_set: {
+        Args: { p_set_id: string; p_name: string };
+        Returns: ChartOfAccountTemplateSetsRow;
+      };
+      set_chart_of_account_template_set_defaults: {
+        Args: { p_set_id: string; p_entity_types: EntityType[] };
+        Returns: ChartOfAccountTemplateSetsRow;
       };
       reverse_journal_entry: {
         Args: { p_entry_id: string; p_memo?: string | null };

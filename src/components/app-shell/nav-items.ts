@@ -21,7 +21,8 @@ export type NavIconKey =
   | "MailIcon"
   | "QrCodeIcon"
   | "TableIcon"
-  | "TrendingUpIcon";
+  | "TrendingUpIcon"
+  | "SlidersHorizontalIcon";
 
 export type NavItem = {
   href: string;
@@ -102,6 +103,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Payroll",
     icon: "UsersRoundIcon",
     roles: ["owner", "staff"],
+  },
+  {
+    href: "/settings/accounting-standards",
+    label: "Accounting Standards",
+    icon: "SlidersHorizontalIcon",
+    roles: ["owner"],
   },
   {
     href: "/settings/email-templates",

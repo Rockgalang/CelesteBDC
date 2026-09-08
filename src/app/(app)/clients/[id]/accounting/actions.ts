@@ -12,12 +12,14 @@ import {
 
 export async function seedChartOfAccountsAction(
   clientId: string,
+  templateSetId?: string,
 ): Promise<ActionResult> {
   await requireRole("owner", "staff");
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("create_default_chart_of_accounts", {
     p_client_id: clientId,
+    p_template_set_id: templateSetId || null,
   });
   if (error) {
     return { ok: false, error: error.message };

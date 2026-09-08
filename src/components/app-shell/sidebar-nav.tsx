@@ -13,6 +13,7 @@ import {
   QrCodeIcon,
   ReceiptIcon,
   ScanSearchIcon,
+  SlidersHorizontalIcon,
   TableIcon,
   TrendingUpIcon,
   UsersIcon,
@@ -39,6 +40,7 @@ const ICONS: Record<NavIconKey, LucideIcon> = {
   UsersRoundIcon,
   MailIcon,
   QrCodeIcon,
+  SlidersHorizontalIcon,
   TableIcon,
   TrendingUpIcon,
 };
