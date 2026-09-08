@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { DocumentsPanel } from "@/app/(app)/clients/[id]/documents-panel";
+import { ExtraRegistrationRequestsPanel } from "@/app/(app)/clients/[id]/files/extra-registration-requests-panel";
 import { getCurrentProfile } from "@/lib/auth/current-profile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,11 +20,18 @@ export default async function PortalDocumentsPage() {
   }
 
   const supabase = await createClient();
-  const { data: documents } = await supabase
-    .from("documents")
-    .select("*")
-    .eq("client_id", profile.client_id)
-    .order("created_at", { ascending: false });
+  const [{ data: documents }, { data: extraRequests }] = await Promise.all([
+    supabase
+      .from("documents")
+      .select("*")
+      .eq("client_id", profile.client_id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("extra_registration_requests")
+      .select("*")
+      .eq("client_id", profile.client_id)
+      .order("created_at", { ascending: false }),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -37,6 +45,11 @@ export default async function PortalDocumentsPage() {
       <DocumentsPanel
         clientId={profile.client_id}
         documents={documents ?? []}
+      />
+      <ExtraRegistrationRequestsPanel
+        clientId={profile.client_id}
+        canManage={false}
+        requests={extraRequests ?? []}
       />
     </div>
   );

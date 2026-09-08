@@ -589,6 +589,28 @@ export type LedgerImportRowsRow = {
   updated_at: string;
 };
 
+export type ExtraRegistrationStatus =
+  | "pending"
+  | "quoted"
+  | "accepted"
+  | "declined";
+
+export type ExtraRegistrationRequestsRow = {
+  id: string;
+  client_id: string;
+  label: string;
+  note: string | null;
+  status: ExtraRegistrationStatus;
+  quoted_fee: string | null;
+  quoted_note: string | null;
+  quoted_by: string | null;
+  quoted_at: string | null;
+  decided_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type EmployeesRow = {
   id: string;
   client_id: string;
@@ -867,6 +889,11 @@ type LedgerImportRowsInsert = Pick<
       "batch_id" | "row_number" | "entry_type" | "entry_date" | "description" | "amount" | "id"
     >
   >;
+type ExtraRegistrationRequestsInsert = Pick<
+  ExtraRegistrationRequestsRow,
+  "client_id" | "label"
+> &
+  Partial<Omit<ExtraRegistrationRequestsRow, "client_id" | "label" | "id">>;
 type PayslipsInsert = Pick<
   PayslipsRow,
   "payroll_run_id" | "employee_id" | "client_id"
@@ -1053,6 +1080,11 @@ export type Database = {
         LedgerImportRowsInsert,
         Partial<Omit<LedgerImportRowsRow, "id">>
       >;
+      extra_registration_requests: TableDef<
+        ExtraRegistrationRequestsRow,
+        ExtraRegistrationRequestsInsert,
+        Partial<Omit<ExtraRegistrationRequestsRow, "id">>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
@@ -1171,6 +1203,18 @@ export type Database = {
         };
         Returns: ClientsRow;
       };
+      quote_extra_registration_request: {
+        Args: { p_id: string; p_fee: number; p_note: string | null };
+        Returns: ExtraRegistrationRequestsRow;
+      };
+      decline_extra_registration_request: {
+        Args: { p_id: string; p_note: string | null };
+        Returns: ExtraRegistrationRequestsRow;
+      };
+      respond_extra_registration_request: {
+        Args: { p_id: string; p_accept: boolean };
+        Returns: ExtraRegistrationRequestsRow;
+      };
     };
     Enums: {
       user_role: UserRole;
@@ -1204,6 +1248,7 @@ export type Database = {
       report_entry_type: ReportEntryType;
       ledger_import_status: LedgerImportStatus;
       ledger_import_row_status: LedgerImportRowStatus;
+      extra_registration_status: ExtraRegistrationStatus;
     };
   };
 };

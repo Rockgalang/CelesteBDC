@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 
 import { ClientForm } from "@/app/(app)/clients/client-form";
 import { ContactsPanel } from "@/app/(app)/clients/[id]/contacts-panel";
-import { DocumentsPanel } from "@/app/(app)/clients/[id]/documents-panel";
 import { ActivatePanel } from "@/app/(app)/clients/[id]/onboarding/activate-panel";
 import { EngagementLetterPanel } from "@/app/(app)/clients/[id]/onboarding/engagement-letter-panel";
 import { PlanPanel } from "@/app/(app)/clients/[id]/onboarding/plan-panel";
@@ -22,7 +21,6 @@ export default async function ClientProfilePage({
   const [
     { data: client },
     { data: contacts },
-    { data: documents },
     { data: plans },
     { data: subscription },
     { data: letter },
@@ -33,11 +31,6 @@ export default async function ClientProfilePage({
       .select("*")
       .eq("client_id", id)
       .order("is_primary", { ascending: false }),
-    supabase
-      .from("documents")
-      .select("*")
-      .eq("client_id", id)
-      .order("created_at", { ascending: false }),
     supabase.from("plans").select("*").eq("active", true).order("sort_order"),
     supabase
       .from("subscriptions")
@@ -82,7 +75,6 @@ export default async function ClientProfilePage({
       />
 
       <ContactsPanel clientId={client.id} contacts={contacts ?? []} />
-      <DocumentsPanel clientId={client.id} documents={documents ?? []} />
 
       <div className="space-y-4 border-t pt-6">
         <div>

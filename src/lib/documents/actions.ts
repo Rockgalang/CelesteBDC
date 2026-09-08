@@ -80,7 +80,7 @@ export async function uploadDocumentAction(
   }
 
   revalidatePath(`/clients/${parsed.data.clientId}`);
-  revalidatePath(`/clients/${parsed.data.clientId}/profile`);
+  revalidatePath(`/clients/${parsed.data.clientId}/files`);
   revalidatePath("/documents");
   return { ok: true, documentId: document.id };
 }
