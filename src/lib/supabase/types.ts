@@ -557,6 +557,38 @@ export type ManualLedgerEntriesRow = {
   created_by: string | null;
 };
 
+export type LedgerImportStatus = "pending" | "committed" | "rejected";
+export type LedgerImportRowStatus = "pending" | "flagged" | "skipped";
+
+export type LedgerImportBatchesRow = {
+  id: string;
+  client_id: string;
+  filename: string;
+  status: LedgerImportStatus;
+  row_count: number;
+  flagged_count: number;
+  committed_by: string | null;
+  committed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type LedgerImportRowsRow = {
+  id: string;
+  batch_id: string;
+  row_number: number;
+  entry_type: ReportEntryType;
+  entry_date: string;
+  description: string;
+  amount: string;
+  category: string | null;
+  status: LedgerImportRowStatus;
+  flag_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type EmployeesRow = {
   id: string;
   client_id: string;
@@ -820,6 +852,21 @@ type ManualLedgerEntriesInsert = Pick<
       "client_id" | "entry_type" | "description" | "amount" | "id"
     >
   >;
+type LedgerImportBatchesInsert = Pick<
+  LedgerImportBatchesRow,
+  "client_id" | "filename"
+> &
+  Partial<Omit<LedgerImportBatchesRow, "client_id" | "filename" | "id">>;
+type LedgerImportRowsInsert = Pick<
+  LedgerImportRowsRow,
+  "batch_id" | "row_number" | "entry_type" | "entry_date" | "description" | "amount"
+> &
+  Partial<
+    Omit<
+      LedgerImportRowsRow,
+      "batch_id" | "row_number" | "entry_type" | "entry_date" | "description" | "amount" | "id"
+    >
+  >;
 type PayslipsInsert = Pick<
   PayslipsRow,
   "payroll_run_id" | "employee_id" | "client_id"
@@ -996,6 +1043,16 @@ export type Database = {
         ManualLedgerEntriesInsert,
         Partial<Omit<ManualLedgerEntriesRow, "id">>
       >;
+      ledger_import_batches: TableDef<
+        LedgerImportBatchesRow,
+        LedgerImportBatchesInsert,
+        Partial<Omit<LedgerImportBatchesRow, "id">>
+      >;
+      ledger_import_rows: TableDef<
+        LedgerImportRowsRow,
+        LedgerImportRowsInsert,
+        Partial<Omit<LedgerImportRowsRow, "id">>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
@@ -1092,6 +1149,18 @@ export type Database = {
         Args: { p_job_type: JobType };
         Returns: RegistrationJobsRow;
       };
+      commit_ledger_import_batch: {
+        Args: { p_batch_id: string };
+        Returns: LedgerImportBatchesRow;
+      };
+      reject_ledger_import_batch: {
+        Args: { p_batch_id: string };
+        Returns: LedgerImportBatchesRow;
+      };
+      set_ledger_import_row_status: {
+        Args: { p_row_id: string; p_status: LedgerImportRowStatus };
+        Returns: LedgerImportRowsRow;
+      };
       self_register_business: {
         Args: {
           p_business_name: string;
@@ -1133,6 +1202,8 @@ export type Database = {
       employee_status: EmployeeStatus;
       payroll_run_status: PayrollRunStatus;
       report_entry_type: ReportEntryType;
+      ledger_import_status: LedgerImportStatus;
+      ledger_import_row_status: LedgerImportRowStatus;
     };
   };
 };

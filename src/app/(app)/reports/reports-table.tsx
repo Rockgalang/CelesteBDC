@@ -72,18 +72,38 @@ function downloadCsv(rows: LedgerRow[]) {
   URL.revokeObjectURL(url);
 }
 
-export function ReportsTable({ rows }: { rows: LedgerRow[] }) {
+export function ReportsTable({
+  rows,
+  clientId,
+}: {
+  rows: LedgerRow[];
+  clientId: string;
+}) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [draft, setDraft] = useState<ManualLedgerEntryInput>(EMPTY_DRAFT);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<ManualLedgerEntryInput>(EMPTY_DRAFT);
 
-  const filteredRows = useMemo(
-    () => (filter === "all" ? rows : rows.filter((r) => r.entryType === filter)),
-    [rows, filter],
-  );
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (filter !== "all" && r.entryType !== filter) return false;
+      if (dateFrom && r.date < dateFrom) return false;
+      if (dateTo && r.date > dateTo) return false;
+      if (
+        q &&
+        !r.description.toLowerCase().includes(q) &&
+        !(r.category ?? "").toLowerCase().includes(q)
+      )
+        return false;
+      return true;
+    });
+  }, [rows, filter, search, dateFrom, dateTo]);
 
   const totals = useMemo(() => {
     const sales = filteredRows
@@ -98,7 +118,7 @@ export function ReportsTable({ rows }: { rows: LedgerRow[] }) {
   const onAdd = () => {
     setError(null);
     startTransition(async () => {
-      const result = await addManualLedgerEntryAction(draft);
+      const result = await addManualLedgerEntryAction(clientId, draft);
       if (!result.ok) {
         setError(result.error);
         return;
@@ -122,7 +142,11 @@ export function ReportsTable({ rows }: { rows: LedgerRow[] }) {
     if (!editingId) return;
     setError(null);
     startTransition(async () => {
-      const result = await updateManualLedgerEntryAction(editingId, editDraft);
+      const result = await updateManualLedgerEntryAction(
+        editingId,
+        clientId,
+        editDraft,
+      );
       if (!result.ok) {
         setError(result.error);
         return;
@@ -134,7 +158,7 @@ export function ReportsTable({ rows }: { rows: LedgerRow[] }) {
   const onDelete = (id: string) => {
     setError(null);
     startTransition(async () => {
-      const result = await deleteManualLedgerEntryAction(id);
+      const result = await deleteManualLedgerEntryAction(id, clientId);
       if (!result.ok) setError(result.error);
     });
   };
@@ -161,14 +185,19 @@ export function ReportsTable({ rows }: { rows: LedgerRow[] }) {
       </div>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-2 space-y-0">
           <CardTitle>Register</CardTitle>
-          <Button size="sm" variant="outline" onClick={() => downloadCsv(filteredRows)}>
-            Export CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => downloadCsv(filteredRows)}>
+              Export filtered CSV
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => downloadCsv(rows)}>
+              Export all CSV
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {FILTERS.map((f) => (
               <Button
                 key={f}
@@ -180,6 +209,42 @@ export function ReportsTable({ rows }: { rows: LedgerRow[] }) {
                 {f === "all" ? "All" : f === "sale" ? "Sales" : "Expenses"}
               </Button>
             ))}
+            <Input
+              placeholder="Search description or category..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-56"
+            />
+            <div className="flex items-center gap-1 text-sm">
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-36"
+                aria-label="From date"
+              />
+              <span className="text-muted-foreground">to</span>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-36"
+                aria-label="To date"
+              />
+              {(dateFrom || dateTo || search) && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setDateFrom("");
+                    setDateTo("");
+                    setSearch("");
+                  }}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="overflow-x-auto">

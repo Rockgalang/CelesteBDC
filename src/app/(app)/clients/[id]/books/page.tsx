@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { ReportsTable } from "@/app/(app)/reports/reports-table";
@@ -5,44 +6,41 @@ import {
   LedgerImportPanel,
   type ImportBatchWithRows,
 } from "@/app/(app)/reports/ledger-import-panel";
-import { getCurrentProfile } from "@/lib/auth/current-profile";
-import { createClient } from "@/lib/supabase/server";
 import type { LedgerRow } from "@/app/(app)/reports/types";
+import { createClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Reports — Celeste.bdc" };
+export const metadata: Metadata = { title: "Books — Celeste.bdc" };
 
-export default async function ReportsPage() {
-  const profile = await getCurrentProfile();
-
-  if (!profile.client_id) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        Your account isn&apos;t linked to a client yet. Contact your Celeste
-        BDC representative.
-      </p>
-    );
-  }
+export default async function ClientBooksPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
 
   const supabase = await createClient();
-  const [{ data: receipts }, { data: manualEntries }, { data: importBatches }] =
+  const [{ data: client }, { data: receipts }, { data: manualEntries }, { data: importBatches }] =
     await Promise.all([
+      supabase.from("clients").select("id").eq("id", id).single(),
       supabase
         .from("receipts")
         .select("id, entry_type, vendor_name, receipt_date, amount, category, status, created_at")
-        .eq("client_id", profile.client_id)
+        .eq("client_id", id)
         .order("created_at", { ascending: false }),
       supabase
         .from("manual_ledger_entries")
         .select("*")
-        .eq("client_id", profile.client_id)
+        .eq("client_id", id)
         .order("entry_date", { ascending: false }),
       supabase
         .from("ledger_import_batches")
         .select("*, rows:ledger_import_rows(*)")
-        .eq("client_id", profile.client_id)
+        .eq("client_id", id)
         .eq("status", "pending")
         .order("created_at", { ascending: false }),
     ]);
+
+  if (!client) notFound();
 
   const batches = (importBatches ?? []) as unknown as ImportBatchWithRows[];
 
@@ -72,21 +70,15 @@ export default async function ReportsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Sales & expense reports
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Books</h1>
         <p className="text-muted-foreground text-sm">
-          Every receipt you upload lands here automatically. Add quick
-          entries directly too — think of this as your own running
-          register. Export to CSV any time.
+          Every receipt and manual entry for this client, filterable by type
+          and date. Export to CSV any time, or review and commit a client&apos;s
+          CSV import below.
         </p>
       </div>
-      <ReportsTable rows={rows} clientId={profile.client_id} />
-      <LedgerImportPanel
-        clientId={profile.client_id}
-        canCommit={false}
-        batches={batches}
-      />
+      <ReportsTable rows={rows} clientId={id} />
+      <LedgerImportPanel clientId={id} canCommit={true} batches={batches} />
     </div>
   );
 }

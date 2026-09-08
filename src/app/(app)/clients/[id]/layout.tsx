@@ -32,6 +32,7 @@ export default async function ClientWorkspaceLayout({
   const tabs = [
     { href: `/clients/${id}`, label: "Dashboard", exact: true },
     { href: `/clients/${id}/files`, label: "Client's Files" },
+    { href: `/clients/${id}/books`, label: "Books" },
     { href: `/clients/${id}/accounting`, label: "Accounting" },
     { href: `/clients/${id}/tax`, label: "Tax" },
     { href: `/clients/${id}/payroll`, label: "Payroll" },
