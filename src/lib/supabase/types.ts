@@ -78,6 +78,8 @@ export type ReceiptStatus =
   | "rejected"
   | "duplicate";
 
+export type ReportEntryType = "sale" | "expense";
+
 export type EmploymentType =
   "regular" | "probationary" | "contractual" | "part_time";
 export type EmployeeStatus = "active" | "on_leave" | "separated";
@@ -536,6 +538,20 @@ export type ReceiptsRow = {
   reviewed_by: string | null;
   reviewed_at: string | null;
   rejection_reason: string | null;
+  entry_type: ReportEntryType;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type ManualLedgerEntriesRow = {
+  id: string;
+  client_id: string;
+  entry_type: ReportEntryType;
+  entry_date: string;
+  description: string;
+  amount: string;
+  category: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -794,6 +810,16 @@ type PayrollRunsInsert = Pick<PayrollRunsRow, "client_id" | "period"> &
   Partial<Omit<PayrollRunsRow, "client_id" | "period">>;
 type PaymentChannelsInsert = Pick<PaymentChannelsRow, "method" | "label"> &
   Partial<Omit<PaymentChannelsRow, "method" | "label" | "id">>;
+type ManualLedgerEntriesInsert = Pick<
+  ManualLedgerEntriesRow,
+  "client_id" | "entry_type" | "description" | "amount"
+> &
+  Partial<
+    Omit<
+      ManualLedgerEntriesRow,
+      "client_id" | "entry_type" | "description" | "amount" | "id"
+    >
+  >;
 type PayslipsInsert = Pick<
   PayslipsRow,
   "payroll_run_id" | "employee_id" | "client_id"
@@ -965,6 +991,11 @@ export type Database = {
         PaymentChannelsInsert,
         Partial<Omit<PaymentChannelsRow, "id">>
       >;
+      manual_ledger_entries: TableDef<
+        ManualLedgerEntriesRow,
+        ManualLedgerEntriesInsert,
+        Partial<Omit<ManualLedgerEntriesRow, "id">>
+      >;
     };
     Views: Record<string, never>;
     Functions: {
@@ -1101,6 +1132,7 @@ export type Database = {
       employment_type: EmploymentType;
       employee_status: EmployeeStatus;
       payroll_run_status: PayrollRunStatus;
+      report_entry_type: ReportEntryType;
     };
   };
 };

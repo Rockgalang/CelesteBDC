@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { formatManila } from "@/lib/format";
 import { money, ZERO } from "@/lib/money";
@@ -47,6 +54,7 @@ export function ReceiptsPanel({
   const formRef = useRef<HTMLFormElement>(null);
   const [isUploading, startUpload] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [entryType, setEntryType] = useState<"sale" | "expense">("expense");
 
   const onUpload = (formData: FormData) => {
     setError(null);
@@ -68,6 +76,22 @@ export function ReceiptsPanel({
       <CardContent className="space-y-4">
         <form ref={formRef} action={onUpload} className="space-y-3">
           <input type="hidden" name="clientId" value={clientId} />
+          <input type="hidden" name="entryType" value={entryType} />
+          <div className="space-y-1.5">
+            <Label>This receipt is for a</Label>
+            <Select
+              value={entryType}
+              onValueChange={(v) => setEntryType(v as "sale" | "expense")}
+            >
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="expense">Expense / purchase</SelectItem>
+                <SelectItem value="sale">Sale</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="receipt-file">Photo of receipt</Label>
             <Input
