@@ -20,13 +20,15 @@ import { JOB_TYPE_LABELS, JOB_TYPES } from "@/lib/validation/registration";
 
 export function NewJobForm({
   clients,
+  defaultClientId,
 }: {
   clients: { id: string; business_name: string }[];
+  defaultClientId?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [clientId, setClientId] = useState("");
+  const [clientId, setClientId] = useState(defaultClientId ?? "");
   const [jobType, setJobType] = useState("");
   const [isRenewal, setIsRenewal] = useState(false);
   const [targetDate, setTargetDate] = useState("");

@@ -1,8 +1,9 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { ArrowLeftIcon } from "lucide-react";
 
 import { ReconciliationPanel } from "@/app/(app)/clients/[id]/accounting/bank/[bankAccountId]/reconciliation-panel";
-import { requireRole } from "@/lib/auth/current-profile";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Reconcile bank account — Celeste.bdc" };
@@ -12,7 +13,6 @@ export default async function BankAccountDetailPage({
 }: {
   params: Promise<{ id: string; bankAccountId: string }>;
 }) {
-  await requireRole("owner", "staff");
   const { id, bankAccountId } = await params;
 
   const supabase = await createClient();
@@ -70,9 +70,16 @@ export default async function BankAccountDetailPage({
     });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <Link
+          href={`/clients/${id}/accounting/bank`}
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+        >
+          <ArrowLeftIcon className="size-3.5" />
+          Bank
+        </Link>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
           {bankAccount.bank_name} — {bankAccount.account_name}
         </h1>
         {!bankAccount.gl_account_id && (

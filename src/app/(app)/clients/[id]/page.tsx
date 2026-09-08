@@ -1,12 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { ClientForm } from "@/app/(app)/clients/client-form";
 import { ContactsPanel } from "@/app/(app)/clients/[id]/contacts-panel";
 import { DocumentsPanel } from "@/app/(app)/clients/[id]/documents-panel";
-import { Button } from "@/components/ui/button";
-import { requireRole } from "@/lib/auth/current-profile";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Client — Celeste.bdc" };
@@ -16,7 +13,6 @@ export default async function ClientDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireRole("owner", "staff");
   const { id } = await params;
 
   const supabase = await createClient();
@@ -39,31 +35,6 @@ export default async function ClientDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {client.business_name}
-          </h1>
-          {client.trade_name && (
-            <p className="text-muted-foreground text-sm">{client.trade_name}</p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/clients/${client.id}/onboarding`}>Onboarding</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/clients/${client.id}/accounting`}>Accounting</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/clients/${client.id}/tax`}>Tax</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/clients/${client.id}/payroll`}>Payroll</Link>
-          </Button>
-        </div>
-      </div>
-
       <ClientForm
         clientId={client.id}
         defaultValues={{

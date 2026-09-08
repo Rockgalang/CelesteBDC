@@ -8,8 +8,13 @@ export const metadata: Metadata = {
   title: "New registration job — Celeste.bdc",
 };
 
-export default async function NewRegistrationJobPage() {
+export default async function NewRegistrationJobPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ clientId?: string }>;
+}) {
   await requireRole("owner", "staff");
+  const { clientId } = await searchParams;
 
   const supabase = await createClient();
   const { data: clients } = await supabase
@@ -28,7 +33,7 @@ export default async function NewRegistrationJobPage() {
           template for that registration type.
         </p>
       </div>
-      <NewJobForm clients={clients ?? []} />
+      <NewJobForm clients={clients ?? []} defaultClientId={clientId} />
     </div>
   );
 }

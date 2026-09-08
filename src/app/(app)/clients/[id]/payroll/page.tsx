@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { EmployeesPanel } from "@/app/(app)/clients/[id]/payroll/employees-panel";
 import { RunsPanel } from "@/app/(app)/clients/[id]/payroll/runs-panel";
 import { Card, CardContent } from "@/components/ui/card";
-import { requireRole } from "@/lib/auth/current-profile";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Payroll — Celeste.bdc" };
@@ -14,13 +13,12 @@ export default async function ClientPayrollPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireRole("owner", "staff");
   const { id } = await params;
 
   const supabase = await createClient();
   const [{ data: client }, { data: subscription }, { data: employees }, { data: runs }] =
     await Promise.all([
-      supabase.from("clients").select("id, business_name").eq("id", id).single(),
+      supabase.from("clients").select("id").eq("id", id).single(),
       supabase
         .from("subscriptions")
         .select("plans(employee_limit, features)")
@@ -48,16 +46,7 @@ export default async function ClientPayrollPage({
   const payrollLocked = plan?.features?.payroll_locked === true;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Payroll — {client.business_name}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          Employee roster, monthly payroll runs, and payslips.
-        </p>
-      </div>
-
+    <div className="space-y-6">
       {payrollLocked && (
         <Card className="border-warning">
           <CardContent className="pt-4 text-sm">

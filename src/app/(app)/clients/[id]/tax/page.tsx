@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 
 import { TaxPanel } from "@/app/(app)/clients/[id]/tax/tax-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireRole } from "@/lib/auth/current-profile";
 import { upcomingTaxObligations } from "@/lib/tax/deadlines";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,14 +13,13 @@ export default async function ClientTaxPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireRole("owner", "staff");
   const { id } = await params;
 
   const supabase = await createClient();
   const [{ data: client }, { data: filedTasks }] = await Promise.all([
     supabase
       .from("clients")
-      .select("id, business_name, entity_type, tax_type, vat_registered")
+      .select("id, entity_type, tax_type, vat_registered")
       .eq("id", id)
       .single(),
     supabase
@@ -42,16 +40,11 @@ export default async function ClientTaxPage({
   const filedKinds = new Set((filedTasks ?? []).map((t) => t.kind));
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Tax calendar — {client.business_name}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          What&apos;s due, and when. A planning aid, not tax advice — verify
-          every deadline independently.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <p className="text-muted-foreground text-sm">
+        What&apos;s due, and when. A planning aid, not tax advice — verify
+        every deadline independently.
+      </p>
 
       <Card>
         <CardHeader>
