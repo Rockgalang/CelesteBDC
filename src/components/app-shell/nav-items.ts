@@ -22,7 +22,8 @@ export type NavIconKey =
   | "QrCodeIcon"
   | "TableIcon"
   | "TrendingUpIcon"
-  | "SlidersHorizontalIcon";
+  | "SlidersHorizontalIcon"
+  | "FileSignatureIcon";
 
 export type NavItem = {
   href: string;
@@ -108,6 +109,12 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/settings/accounting-standards",
     label: "Accounting Standards",
     icon: "SlidersHorizontalIcon",
+    roles: ["owner"],
+  },
+  {
+    href: "/settings/invoice-letterhead",
+    label: "Invoice letterhead",
+    icon: "FileSignatureIcon",
     roles: ["owner"],
   },
   {

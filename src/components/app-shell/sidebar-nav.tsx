@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import {
   CameraIcon,
+  FileSignatureIcon,
   FileTextIcon,
   HomeIcon,
   LandmarkIcon,
@@ -34,6 +35,7 @@ const ICONS: Record<NavIconKey, LucideIcon> = {
   WorkflowIcon,
   ReceiptIcon,
   FileTextIcon,
+  FileSignatureIcon,
   CameraIcon,
   ScanSearchIcon,
   LandmarkIcon,

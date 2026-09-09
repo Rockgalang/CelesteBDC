@@ -325,6 +325,32 @@ export type PaymentsRow = {
   created_by: string | null;
 };
 
+export type TipStatus = "submitted" | "confirmed" | "rejected";
+
+export type TipsRow = {
+  id: string;
+  client_id: string;
+  amount: string;
+  note: string | null;
+  proof_document_id: string | null;
+  status: TipStatus;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type InvoiceLetterheadRow = {
+  id: number;
+  business_name: string;
+  logo_data_url: string | null;
+  address: string | null;
+  footer_note: string | null;
+  updated_at: string;
+  updated_by: string | null;
+};
+
 export type PaymentChannelsRow = {
   id: string;
   method: PaymentMethod;
@@ -856,6 +882,8 @@ type InvoiceLinesInsert = Pick<
   >;
 type PaymentsInsert = Pick<PaymentsRow, "invoice_id" | "amount" | "method"> &
   Partial<Omit<PaymentsRow, "invoice_id" | "amount" | "method">>;
+type TipsInsert = Pick<TipsRow, "client_id" | "amount"> &
+  Partial<Omit<TipsRow, "client_id" | "amount" | "id">>;
 type EngagementLettersInsert = Pick<
   EngagementLettersRow,
   "client_id" | "signed_by_name"
@@ -1099,6 +1127,12 @@ export type Database = {
         PaymentsRow,
         PaymentsInsert,
         Partial<Omit<PaymentsRow, "id">>
+      >;
+      tips: TableDef<TipsRow, TipsInsert, Partial<Omit<TipsRow, "id">>>;
+      invoice_letterhead: TableDef<
+        InvoiceLetterheadRow,
+        never,
+        Partial<Omit<InvoiceLetterheadRow, "id">>
       >;
       engagement_letters: TableDef<
         EngagementLettersRow,
@@ -1360,6 +1394,18 @@ export type Database = {
         Args: { p_id: string; p_accept: boolean };
         Returns: ExtraRegistrationRequestsRow;
       };
+      confirm_tip: {
+        Args: { p_tip_id: string };
+        Returns: TipsRow;
+      };
+      reject_tip: {
+        Args: { p_tip_id: string };
+        Returns: TipsRow;
+      };
+      issue_invoice_after_proof_review: {
+        Args: { p_invoice_id: string };
+        Returns: InvoicesRow;
+      };
       record_inventory_movement: {
         Args: {
           p_product_id: string;
@@ -1406,6 +1452,7 @@ export type Database = {
       product_kind: ProductKind;
       inventory_movement_type: InventoryMovementType;
       pay_type: PayType;
+      tip_status: TipStatus;
     };
   };
 };
