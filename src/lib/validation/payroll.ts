@@ -7,12 +7,28 @@ export const EMPLOYMENT_TYPES = [
   "part_time",
 ] as const;
 
+export const PAY_TYPES = [
+  "monthly",
+  "bi_monthly",
+  "commission",
+  "salary_plus_commission",
+] as const;
+
+export const PAY_TYPE_LABELS: Record<(typeof PAY_TYPES)[number], string> = {
+  monthly: "Monthly",
+  bi_monthly: "Bi-monthly",
+  commission: "Commission",
+  salary_plus_commission: "Salary + Commission",
+};
+
 export const createEmployeeSchema = z.object({
   clientId: z.string().uuid(),
   fullName: z.string().trim().min(1, "Name is required."),
   position: z.string().trim().optional(),
   employmentType: z.enum(EMPLOYMENT_TYPES),
   monthlyRate: z.coerce.number().nonnegative(),
+  payType: z.enum(PAY_TYPES).default("monthly"),
+  commissionRate: z.coerce.number().min(0).max(100).optional(),
   sssNo: z.string().trim().optional(),
   philhealthNo: z.string().trim().optional(),
   pagibigNo: z.string().trim().optional(),
@@ -20,6 +36,30 @@ export const createEmployeeSchema = z.object({
   hireDate: z.string().optional(),
 });
 export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>;
+
+export const upsertAttendanceSchema = z.object({
+  payrollRunId: z.string().uuid(),
+  employeeId: z.string().uuid(),
+  clientId: z.string().uuid(),
+  lateMinutes: z.coerce.number().nonnegative().default(0),
+  absenceDays: z.coerce.number().nonnegative().default(0),
+  overtimeHours: z.coerce.number().nonnegative().default(0),
+  nightDifferentialHours: z.coerce.number().nonnegative().default(0),
+  leaveDays: z.coerce.number().nonnegative().default(0),
+  leaveType: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+});
+export type UpsertAttendanceInput = z.infer<typeof upsertAttendanceSchema>;
+
+export const updatePayrollStandardsSchema = z.object({
+  overtimeMultiplier: z.coerce.number().positive(),
+  nightDifferentialRate: z.coerce.number().nonnegative(),
+  lateDeductionPerMinute: z.coerce.number().nonnegative(),
+  absenceDeductionPerDayMultiplier: z.coerce.number().nonnegative(),
+});
+export type UpdatePayrollStandardsInput = z.infer<
+  typeof updatePayrollStandardsSchema
+>;
 
 export const createPayrollRunSchema = z.object({
   clientId: z.string().uuid(),

@@ -33,6 +33,8 @@ import { formatPeso } from "@/lib/format";
 import { money } from "@/lib/money";
 import {
   EMPLOYMENT_TYPES,
+  PAY_TYPES,
+  PAY_TYPE_LABELS,
   createEmployeeSchema,
   type CreateEmployeeInput,
 } from "@/lib/validation/payroll";
@@ -63,8 +65,11 @@ export function EmployeesPanel({
     formState: { errors },
   } = useForm<CreateEmployeeInput>({
     resolver: zodResolver(createEmployeeSchema),
-    defaultValues: { clientId, employmentType: "regular" },
+    defaultValues: { clientId, employmentType: "regular", payType: "monthly" },
   });
+
+  const payType = watch("payType");
+  const showCommissionRate = payType === "commission" || payType === "salary_plus_commission";
 
   const onCreate = (data: CreateEmployeeInput) => {
     setError(null);
@@ -74,7 +79,7 @@ export function EmployeesPanel({
         setError(result.error);
         return;
       }
-      reset({ clientId, employmentType: "regular" });
+      reset({ clientId, employmentType: "regular", payType: "monthly" });
     });
   };
 
@@ -110,6 +115,7 @@ export function EmployeesPanel({
                 <TableHead>Name</TableHead>
                 <TableHead>Position</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Pay type</TableHead>
                 <TableHead>Monthly rate</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead />
@@ -122,6 +128,10 @@ export function EmployeesPanel({
                   <TableCell>{e.position ?? "—"}</TableCell>
                   <TableCell className="capitalize">
                     {e.employment_type.replace(/_/g, " ")}
+                  </TableCell>
+                  <TableCell>
+                    {PAY_TYPE_LABELS[e.pay_type]}
+                    {e.commission_rate && ` (${e.commission_rate}%)`}
                   </TableCell>
                   <TableCell>{formatPeso(money(e.monthly_rate))}</TableCell>
                   <TableCell>
@@ -226,6 +236,37 @@ export function EmployeesPanel({
                 </p>
               )}
             </div>
+            <div className="space-y-1.5">
+              <Label>Pay type</Label>
+              <Select
+                value={payType}
+                onValueChange={(v) =>
+                  setValue("payType", v as CreateEmployeeInput["payType"])
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAY_TYPES.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {PAY_TYPE_LABELS[t]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {showCommissionRate && (
+              <div className="space-y-1.5">
+                <Label htmlFor="emp-commission">Commission rate (%)</Label>
+                <Input
+                  id="emp-commission"
+                  type="number"
+                  step="0.01"
+                  {...register("commissionRate")}
+                />
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="emp-sss">SSS no.</Label>
               <Input id="emp-sss" {...register("sssNo")} />

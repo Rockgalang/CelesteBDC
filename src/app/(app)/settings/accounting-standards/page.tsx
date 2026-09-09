@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { AccountingStandardsPanel } from "@/app/(app)/settings/accounting-standards/accounting-standards-panel";
+import { PayrollStandardsPanel } from "@/app/(app)/settings/accounting-standards/payroll-standards-panel";
 import { requireRole } from "@/lib/auth/current-profile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,18 +11,20 @@ export default async function AccountingStandardsPage() {
   await requireRole("owner");
 
   const supabase = await createClient();
-  const [{ data: sets }, { data: templates }] = await Promise.all([
-    supabase
-      .from("chart_of_account_template_sets")
-      .select("*")
-      .order("is_builtin", { ascending: false })
-      .order("created_at"),
-    supabase
-      .from("chart_of_account_templates")
-      .select("*")
-      .order("template_set_id")
-      .order("sequence"),
-  ]);
+  const [{ data: sets }, { data: templates }, { data: payrollStandards }] =
+    await Promise.all([
+      supabase
+        .from("chart_of_account_template_sets")
+        .select("*")
+        .order("is_builtin", { ascending: false })
+        .order("created_at"),
+      supabase
+        .from("chart_of_account_templates")
+        .select("*")
+        .order("template_set_id")
+        .order("sequence"),
+      supabase.from("payroll_standards").select("*").eq("id", 1).single(),
+    ]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -38,6 +41,7 @@ export default async function AccountingStandardsPage() {
         </p>
       </div>
       <AccountingStandardsPanel sets={sets ?? []} templates={templates ?? []} />
+      {payrollStandards && <PayrollStandardsPanel standards={payrollStandards} />}
     </div>
   );
 }

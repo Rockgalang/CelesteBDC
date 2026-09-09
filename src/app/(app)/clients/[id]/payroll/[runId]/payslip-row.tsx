@@ -2,12 +2,17 @@
 
 import { useState, useTransition } from "react";
 
-import { updatePayslipAction } from "@/app/(app)/clients/[id]/payroll/actions";
+import {
+  applyAttendanceToPayslipAction,
+  updatePayslipAction,
+  upsertAttendanceAction,
+} from "@/app/(app)/clients/[id]/payroll/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { formatPeso } from "@/lib/format";
 import { money } from "@/lib/money";
-import type { PayslipsRow } from "@/lib/supabase/types";
+import type { AttendanceRecordsRow, PayslipsRow } from "@/lib/supabase/types";
 
 const FIELDS: { key: keyof FieldState; label: string }[] = [
   { key: "basicPay", label: "Basic" },
@@ -43,14 +48,27 @@ export function PayslipRow({
   payslip,
   employeeName,
   editable,
+  attendance,
 }: {
   clientId: string;
   runId: string;
   payslip: PayslipsRow;
   employeeName: string;
   editable: boolean;
+  attendance: AttendanceRecordsRow | null;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [attendanceValues, setAttendanceValues] = useState({
+    lateMinutes: attendance?.late_minutes ?? "0",
+    absenceDays: attendance?.absence_days ?? "0",
+    overtimeHours: attendance?.overtime_hours ?? "0",
+    nightDifferentialHours: attendance?.night_differential_hours ?? "0",
+    leaveDays: attendance?.leave_days ?? "0",
+    leaveType: attendance?.leave_type ?? "",
+  });
+  const [attendanceError, setAttendanceError] = useState<string | null>(null);
+  const [isSavingAttendance, startSaveAttendance] = useTransition();
+  const [isApplying, startApply] = useTransition();
   const [values, setValues] = useState<FieldState>({
     basicPay: payslip.basic_pay,
     overtimePay: payslip.overtime_pay,
@@ -92,6 +110,44 @@ export function PayslipRow({
     });
   };
 
+  const onSaveAttendance = () => {
+    setAttendanceError(null);
+    startSaveAttendance(async () => {
+      const result = await upsertAttendanceAction({
+        payrollRunId: runId,
+        employeeId: payslip.employee_id,
+        clientId,
+        lateMinutes: Number(attendanceValues.lateMinutes),
+        absenceDays: Number(attendanceValues.absenceDays),
+        overtimeHours: Number(attendanceValues.overtimeHours),
+        nightDifferentialHours: Number(attendanceValues.nightDifferentialHours),
+        leaveDays: Number(attendanceValues.leaveDays),
+        leaveType: attendanceValues.leaveType || undefined,
+      });
+      if (!result.ok) setAttendanceError(result.error);
+    });
+  };
+
+  const onApplyAttendance = () => {
+    setAttendanceError(null);
+    startApply(async () => {
+      const result = await applyAttendanceToPayslipAction(
+        clientId,
+        runId,
+        payslip.employee_id,
+      );
+      if (!result.ok) {
+        setAttendanceError(result.error);
+        return;
+      }
+      setValues((v) => ({
+        ...v,
+        overtimePay: result.overtimePay ?? v.overtimePay,
+        otherDeductions: result.otherDeductions ?? v.otherDeductions,
+      }));
+    });
+  };
+
   return (
     <div className="space-y-2 border-b py-3 last:border-b-0">
       <div className="flex items-center justify-between text-sm">
@@ -111,6 +167,101 @@ export function PayslipRow({
 
       {expanded && editable && (
         <div className="space-y-3">
+          <div className="space-y-2 rounded-md border p-3">
+            <p className="text-sm font-medium">Attendance this period</p>
+            <div className="grid gap-2 sm:grid-cols-5">
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Late (min)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={attendanceValues.lateMinutes}
+                  onChange={(e) =>
+                    setAttendanceValues((v) => ({ ...v, lateMinutes: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Absences (days)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={attendanceValues.absenceDays}
+                  onChange={(e) =>
+                    setAttendanceValues((v) => ({ ...v, absenceDays: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Overtime (hrs)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={attendanceValues.overtimeHours}
+                  onChange={(e) =>
+                    setAttendanceValues((v) => ({ ...v, overtimeHours: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Night diff (hrs)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={attendanceValues.nightDifferentialHours}
+                  onChange={(e) =>
+                    setAttendanceValues((v) => ({
+                      ...v,
+                      nightDifferentialHours: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-muted-foreground text-xs">Leave (days)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={attendanceValues.leaveDays}
+                  onChange={(e) =>
+                    setAttendanceValues((v) => ({ ...v, leaveDays: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-muted-foreground text-xs">Leave type</Label>
+                <Input
+                  value={attendanceValues.leaveType}
+                  onChange={(e) =>
+                    setAttendanceValues((v) => ({ ...v, leaveType: e.target.value }))
+                  }
+                  placeholder="sick, vacation, etc."
+                />
+              </div>
+            </div>
+            {attendanceError && (
+              <p className="text-destructive text-sm">{attendanceError}</p>
+            )}
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isSavingAttendance}
+                onClick={onSaveAttendance}
+              >
+                Save attendance
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isApplying || !attendance}
+                onClick={onApplyAttendance}
+              >
+                Apply to overtime & deductions
+              </Button>
+            </div>
+          </div>
+
           <div className="grid gap-2 sm:grid-cols-4">
             {FIELDS.map((f) => (
               <div key={f.key} className="space-y-1">

@@ -659,6 +659,12 @@ export type InventoryMovementsRow = {
   created_by: string | null;
 };
 
+export type PayType =
+  | "monthly"
+  | "bi_monthly"
+  | "commission"
+  | "salary_plus_commission";
+
 export type EmployeesRow = {
   id: string;
   client_id: string;
@@ -673,9 +679,37 @@ export type EmployeesRow = {
   hire_date: string | null;
   separation_date: string | null;
   status: EmployeeStatus;
+  pay_type: PayType;
+  commission_rate: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
+};
+
+export type PayrollStandardsRow = {
+  id: number;
+  overtime_multiplier: string;
+  night_differential_rate: string;
+  late_deduction_per_minute: string;
+  absence_deduction_per_day_multiplier: string;
+  updated_at: string;
+  updated_by: string | null;
+};
+
+export type AttendanceRecordsRow = {
+  id: string;
+  payroll_run_id: string;
+  employee_id: string;
+  client_id: string;
+  late_minutes: string;
+  absence_days: string;
+  overtime_hours: string;
+  night_differential_hours: string;
+  leave_days: string;
+  leave_type: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type PayrollRunsRow = {
@@ -928,6 +962,16 @@ type EmployeesInsert = Pick<
   "client_id" | "full_name" | "monthly_rate"
 > &
   Partial<Omit<EmployeesRow, "client_id" | "full_name" | "monthly_rate">>;
+type AttendanceRecordsInsert = Pick<
+  AttendanceRecordsRow,
+  "payroll_run_id" | "employee_id" | "client_id"
+> &
+  Partial<
+    Omit<
+      AttendanceRecordsRow,
+      "payroll_run_id" | "employee_id" | "client_id" | "id"
+    >
+  >;
 type PayrollRunsInsert = Pick<PayrollRunsRow, "client_id" | "period"> &
   Partial<Omit<PayrollRunsRow, "client_id" | "period">>;
 type PaymentChannelsInsert = Pick<PaymentChannelsRow, "method" | "label"> &
@@ -1132,6 +1176,16 @@ export type Database = {
         EmployeesRow,
         EmployeesInsert,
         Partial<Omit<EmployeesRow, "id">>
+      >;
+      payroll_standards: TableDef<
+        PayrollStandardsRow,
+        never,
+        Partial<Omit<PayrollStandardsRow, "id">>
+      >;
+      attendance_records: TableDef<
+        AttendanceRecordsRow,
+        AttendanceRecordsInsert,
+        Partial<Omit<AttendanceRecordsRow, "id">>
       >;
       payroll_runs: TableDef<
         PayrollRunsRow,
@@ -1351,6 +1405,7 @@ export type Database = {
       extra_registration_status: ExtraRegistrationStatus;
       product_kind: ProductKind;
       inventory_movement_type: InventoryMovementType;
+      pay_type: PayType;
     };
   };
 };
