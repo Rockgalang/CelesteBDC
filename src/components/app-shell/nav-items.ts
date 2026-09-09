@@ -23,7 +23,8 @@ export type NavIconKey =
   | "TableIcon"
   | "TrendingUpIcon"
   | "SlidersHorizontalIcon"
-  | "FileSignatureIcon";
+  | "FileSignatureIcon"
+  | "PackageIcon";
 
 export type NavItem = {
   href: string;
@@ -65,7 +66,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/documents",
-    label: "Documents",
+    label: "Client's Files",
     icon: "FileTextIcon",
     roles: ["client_admin", "client_user"],
   },
@@ -77,8 +78,14 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/reports",
-    label: "Reports",
+    label: "Books",
     icon: "TableIcon",
+    roles: ["client_admin", "client_user"],
+  },
+  {
+    href: "/products",
+    label: "Products & Services",
+    icon: "PackageIcon",
     roles: ["client_admin", "client_user"],
   },
   {
