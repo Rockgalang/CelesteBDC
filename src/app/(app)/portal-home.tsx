@@ -2,12 +2,14 @@ import Link from "next/link";
 import { FileTextIcon, ReceiptIcon, WorkflowIcon } from "lucide-react";
 
 import { ComplianceChecklist } from "@/app/(app)/compliance-checklist";
+import { JobStatusBadge } from "@/app/(app)/registrations/job-status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPeso } from "@/lib/format";
 import { money, ZERO } from "@/lib/money";
 import { createClient } from "@/lib/supabase/server";
+import { JOB_TYPE_LABELS } from "@/lib/validation/registration";
 import type { CurrentProfile } from "@/lib/auth/current-profile";
 
 /**
@@ -150,6 +152,30 @@ export async function PortalHome({ profile }: { profile: CurrentProfile }) {
           </Card>
         )}
       </div>
+
+      {jobs && jobs.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Registration status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {jobs.map((job) => (
+              <div
+                key={job.id}
+                className="flex items-center justify-between text-sm"
+              >
+                <div>
+                  <span className="font-medium">{JOB_TYPE_LABELS[job.job_type]}</span>
+                  {job.current_stage && (
+                    <span className="text-muted-foreground"> · {job.current_stage}</span>
+                  )}
+                </div>
+                <JobStatusBadge status={job.status} />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <ComplianceChecklist clientId={profile.client_id} />
     </div>

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, UserCogIcon } from "lucide-react";
 
 import { PageTransition } from "@/components/workspace/page-transition";
 import { WorkspaceTabs } from "@/components/workspace/workspace-tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CLIENT_STATUS_VARIANT } from "@/lib/client-status";
 import { requireRole } from "@/lib/auth/current-profile";
 import { createClient } from "@/lib/supabase/server";
@@ -29,13 +30,14 @@ export default async function ClientWorkspaceLayout({
   if (!client) notFound();
 
   const tabs = [
-    { href: `/clients/${id}`, label: "Profile", exact: true },
-    { href: `/clients/${id}/onboarding`, label: "Onboarding" },
-    { href: `/clients/${id}/registrations`, label: "Registrations" },
+    { href: `/clients/${id}`, label: "Dashboard", exact: true },
+    { href: `/clients/${id}/files`, label: "Client's Files" },
+    { href: `/clients/${id}/books`, label: "Books" },
     { href: `/clients/${id}/accounting`, label: "Accounting" },
+    { href: `/clients/${id}/products`, label: "Products & Services" },
     { href: `/clients/${id}/tax`, label: "Tax" },
     { href: `/clients/${id}/payroll`, label: "Payroll" },
-    { href: `/clients/${id}/invoices`, label: "Invoices" },
+    { href: `/clients/${id}/invoices`, label: "Subscription & Billing" },
   ];
 
   return (
@@ -48,13 +50,24 @@ export default async function ClientWorkspaceLayout({
           <ArrowLeftIcon className="size-3.5" />
           Clients
         </Link>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {client.business_name}
-          </h1>
-          <Badge variant={CLIENT_STATUS_VARIANT[client.status]} className="capitalize">
-            {client.status}
-          </Badge>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {client.business_name}
+            </h1>
+            <Badge
+              variant={CLIENT_STATUS_VARIANT[client.status]}
+              className="capitalize"
+            >
+              {client.status}
+            </Badge>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/clients/${id}/profile`}>
+              <UserCogIcon className="size-4" />
+              Update client profile
+            </Link>
+          </Button>
         </div>
         {client.trade_name && (
           <p className="text-muted-foreground -mt-2 text-sm">{client.trade_name}</p>

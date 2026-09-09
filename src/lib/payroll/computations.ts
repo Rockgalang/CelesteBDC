@@ -125,3 +125,64 @@ export function estimatePayslipDeductions(grossPay: Money): ContributionEstimate
     withholdingTax: toDbString(withholdingTax),
   };
 }
+
+// 26 working days/month is the common PH payroll convention for deriving
+// a daily rate from a monthly rate (6-day work week, ~313 days/year minus
+// holidays) — an approximation, same caveat as the rest of this file.
+const WORKING_DAYS_PER_MONTH = 26;
+const WORKING_HOURS_PER_DAY = 8;
+
+export type PayrollStandardsInput = {
+  overtimeMultiplier: Money;
+  nightDifferentialRate: Money;
+  lateDeductionPerMinute: Money;
+  absenceDeductionPerDayMultiplier: Money;
+};
+
+export type AttendanceInput = {
+  lateMinutes: Money;
+  absenceDays: Money;
+  overtimeHours: Money;
+  nightDifferentialHours: Money;
+};
+
+export type AttendanceAdjustment = {
+  overtimePay: string;
+  otherDeductions: string;
+};
+
+/**
+ * Translate one payroll run's attendance record into a suggested overtime
+ * pay and deduction amount, using the client-wide payroll_standards rates.
+ * A starting point for the reviewer, same as the contribution estimates
+ * above — always editable on the payslip afterward.
+ */
+export function computeAttendanceAdjustment(
+  monthlyRate: Money,
+  standards: PayrollStandardsInput,
+  attendance: AttendanceInput,
+): AttendanceAdjustment {
+  const dailyRate = monthlyRate.dividedBy(WORKING_DAYS_PER_MONTH);
+  const hourlyRate = dailyRate.dividedBy(WORKING_HOURS_PER_DAY);
+
+  const overtimePay = hourlyRate
+    .times(standards.overtimeMultiplier)
+    .times(attendance.overtimeHours);
+  // Night differential hours are assumed already paid as regular hours
+  // elsewhere (basic pay) — this is just the extra differential premium.
+  const nightDifferentialPay = hourlyRate
+    .times(standards.nightDifferentialRate)
+    .times(attendance.nightDifferentialHours);
+
+  const lateDeduction = standards.lateDeductionPerMinute.times(
+    attendance.lateMinutes,
+  );
+  const absenceDeduction = dailyRate
+    .times(standards.absenceDeductionPerDayMultiplier)
+    .times(attendance.absenceDays);
+
+  return {
+    overtimePay: toDbString(roundPeso(overtimePay.plus(nightDifferentialPay))),
+    otherDeductions: toDbString(roundPeso(lateDeduction.plus(absenceDeduction))),
+  };
+}

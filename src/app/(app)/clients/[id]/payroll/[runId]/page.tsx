@@ -21,7 +21,7 @@ export default async function PayrollRunDetailPage({
   const { id, runId } = await params;
 
   const supabase = await createClient();
-  const [{ data: run }, { data: payslips }, { data: accounts }] =
+  const [{ data: run }, { data: payslips }, { data: accounts }, { data: attendanceRows }] =
     await Promise.all([
       supabase
         .from("payroll_runs")
@@ -39,9 +39,17 @@ export default async function PayrollRunDetailPage({
         .eq("client_id", id)
         .eq("active", true)
         .order("code"),
+      supabase
+        .from("attendance_records")
+        .select("*")
+        .eq("payroll_run_id", runId),
     ]);
 
   if (!run) notFound();
+
+  const attendanceByEmployee = new Map(
+    (attendanceRows ?? []).map((a) => [a.employee_id, a]),
+  );
 
   const editable = run.status === "draft";
   const totalNet = (payslips ?? []).reduce(
@@ -101,6 +109,7 @@ export default async function PayrollRunDetailPage({
                   payslip={p}
                   employeeName={employee?.full_name ?? "—"}
                   editable={editable}
+                  attendance={attendanceByEmployee.get(p.employee_id) ?? null}
                 />
               );
             })

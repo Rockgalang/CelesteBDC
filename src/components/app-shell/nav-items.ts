@@ -21,7 +21,10 @@ export type NavIconKey =
   | "MailIcon"
   | "QrCodeIcon"
   | "TableIcon"
-  | "TrendingUpIcon";
+  | "TrendingUpIcon"
+  | "SlidersHorizontalIcon"
+  | "FileSignatureIcon"
+  | "PackageIcon";
 
 export type NavItem = {
   href: string;
@@ -57,13 +60,13 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/invoices",
-    label: "Invoices",
+    label: "Payments",
     icon: "ReceiptIcon",
     roles: ["owner", "staff", "client_admin"],
   },
   {
     href: "/documents",
-    label: "Documents",
+    label: "Client's Files",
     icon: "FileTextIcon",
     roles: ["client_admin", "client_user"],
   },
@@ -75,8 +78,14 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/reports",
-    label: "Reports",
+    label: "Books",
     icon: "TableIcon",
+    roles: ["client_admin", "client_user"],
+  },
+  {
+    href: "/products",
+    label: "Products & Services",
+    icon: "PackageIcon",
     roles: ["client_admin", "client_user"],
   },
   {
@@ -87,7 +96,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     href: "/receipts/review",
-    label: "Receipt review",
+    label: "Client Transactions",
     icon: "ScanSearchIcon",
     roles: ["owner", "staff"],
   },
@@ -102,6 +111,18 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Payroll",
     icon: "UsersRoundIcon",
     roles: ["owner", "staff"],
+  },
+  {
+    href: "/settings/accounting-standards",
+    label: "Accounting Standards",
+    icon: "SlidersHorizontalIcon",
+    roles: ["owner"],
+  },
+  {
+    href: "/settings/invoice-letterhead",
+    label: "Invoice letterhead",
+    icon: "FileSignatureIcon",
+    roles: ["owner"],
   },
   {
     href: "/settings/email-templates",

@@ -248,6 +248,8 @@ export type JobChecklistItemsRow = {
   created_by: string | null;
 };
 
+export type ExtraFeeStatus = "pending" | "shouldered" | "settled";
+
 export type GovernmentFeesRow = {
   id: string;
   job_id: string;
@@ -257,6 +259,9 @@ export type GovernmentFeesRow = {
   handling_fee: string;
   receipt_document_id: string | null;
   billed_invoice_id: string | null;
+  status: ExtraFeeStatus;
+  settled_at: string | null;
+  settled_by: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -323,6 +328,32 @@ export type PaymentsRow = {
   created_at: string;
   updated_at: string;
   created_by: string | null;
+};
+
+export type TipStatus = "submitted" | "confirmed" | "rejected";
+
+export type TipsRow = {
+  id: string;
+  client_id: string;
+  amount: string;
+  note: string | null;
+  proof_document_id: string | null;
+  status: TipStatus;
+  confirmed_by: string | null;
+  confirmed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type InvoiceLetterheadRow = {
+  id: number;
+  business_name: string;
+  logo_data_url: string | null;
+  address: string | null;
+  footer_note: string | null;
+  updated_at: string;
+  updated_by: string | null;
 };
 
 export type PaymentChannelsRow = {
@@ -411,9 +442,20 @@ export type AuditLogRow = {
   created_at: string;
 };
 
+export type ChartOfAccountTemplateSetsRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  default_for_entity_types: EntityType[];
+  is_builtin: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
 export type ChartOfAccountTemplatesRow = {
   id: string;
-  template_group: "individual" | "corporate";
+  template_set_id: string;
   code: string;
   name: string;
   type: AccountType;
@@ -544,6 +586,30 @@ export type ReceiptsRow = {
   created_by: string | null;
 };
 
+export type ReceiptImagesRow = {
+  id: string;
+  receipt_id: string;
+  storage_path: string;
+  mime: string;
+  bytes: number;
+  sha256: string;
+  sequence: number;
+  created_at: string;
+  created_by: string | null;
+};
+
+export type ReceiptLineItemsRow = {
+  id: string;
+  receipt_id: string;
+  description: string;
+  amount: string;
+  category: string | null;
+  account_id: string | null;
+  sequence: number;
+  created_at: string;
+  created_by: string | null;
+};
+
 export type ManualLedgerEntriesRow = {
   id: string;
   client_id: string;
@@ -556,6 +622,103 @@ export type ManualLedgerEntriesRow = {
   updated_at: string;
   created_by: string | null;
 };
+
+export type LedgerImportStatus = "pending" | "committed" | "rejected";
+export type LedgerImportRowStatus = "pending" | "flagged" | "skipped";
+
+export type LedgerImportBatchesRow = {
+  id: string;
+  client_id: string;
+  filename: string;
+  status: LedgerImportStatus;
+  row_count: number;
+  flagged_count: number;
+  committed_by: string | null;
+  committed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type LedgerImportRowsRow = {
+  id: string;
+  batch_id: string;
+  row_number: number;
+  entry_type: ReportEntryType;
+  entry_date: string;
+  description: string;
+  amount: string;
+  category: string | null;
+  status: LedgerImportRowStatus;
+  flag_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExtraRegistrationStatus =
+  | "pending"
+  | "quoted"
+  | "accepted"
+  | "declined";
+
+export type ExtraRegistrationRequestsRow = {
+  id: string;
+  client_id: string;
+  label: string;
+  note: string | null;
+  status: ExtraRegistrationStatus;
+  quoted_fee: string | null;
+  quoted_note: string | null;
+  quoted_by: string | null;
+  quoted_at: string | null;
+  decided_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProductKind = "product" | "service";
+export type InventoryMovementType =
+  | "purchase"
+  | "sale"
+  | "adjustment"
+  | "initial";
+
+export type ProductsServicesRow = {
+  id: string;
+  client_id: string;
+  sku: string | null;
+  name: string;
+  description: string | null;
+  kind: ProductKind;
+  unit_price: string;
+  cost_price: string | null;
+  track_inventory: boolean;
+  quantity_on_hand: string;
+  revenue_account_id: string | null;
+  cogs_account_id: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+};
+
+export type InventoryMovementsRow = {
+  id: string;
+  product_id: string;
+  client_id: string;
+  movement_type: InventoryMovementType;
+  quantity: string;
+  note: string | null;
+  created_at: string;
+  created_by: string | null;
+};
+
+export type PayType =
+  | "monthly"
+  | "bi_monthly"
+  | "commission"
+  | "salary_plus_commission";
 
 export type EmployeesRow = {
   id: string;
@@ -571,9 +734,37 @@ export type EmployeesRow = {
   hire_date: string | null;
   separation_date: string | null;
   status: EmployeeStatus;
+  pay_type: PayType;
+  commission_rate: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
+};
+
+export type PayrollStandardsRow = {
+  id: number;
+  overtime_multiplier: string;
+  night_differential_rate: string;
+  late_deduction_per_minute: string;
+  absence_deduction_per_day_multiplier: string;
+  updated_at: string;
+  updated_by: string | null;
+};
+
+export type AttendanceRecordsRow = {
+  id: string;
+  payroll_run_id: string;
+  employee_id: string;
+  client_id: string;
+  late_minutes: string;
+  absence_days: string;
+  overtime_hours: string;
+  night_differential_hours: string;
+  leave_days: string;
+  leave_type: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type PayrollRunsRow = {
@@ -720,6 +911,8 @@ type InvoiceLinesInsert = Pick<
   >;
 type PaymentsInsert = Pick<PaymentsRow, "invoice_id" | "amount" | "method"> &
   Partial<Omit<PaymentsRow, "invoice_id" | "amount" | "method">>;
+type TipsInsert = Pick<TipsRow, "client_id" | "amount"> &
+  Partial<Omit<TipsRow, "client_id" | "amount" | "id">>;
 type EngagementLettersInsert = Pick<
   EngagementLettersRow,
   "client_id" | "signed_by_name"
@@ -736,14 +929,19 @@ type EmailTemplatesInsert = Pick<
   "key" | "subject" | "body_text"
 > &
   Partial<Omit<EmailTemplatesRow, "key" | "subject" | "body_text">>;
+type ChartOfAccountTemplateSetsInsert = Pick<
+  ChartOfAccountTemplateSetsRow,
+  "name"
+> &
+  Partial<Omit<ChartOfAccountTemplateSetsRow, "name" | "id">>;
 type ChartOfAccountTemplatesInsert = Pick<
   ChartOfAccountTemplatesRow,
-  "template_group" | "code" | "name" | "type" | "normal_balance" | "sequence"
+  "template_set_id" | "code" | "name" | "type" | "normal_balance" | "sequence"
 > &
   Partial<
     Omit<
       ChartOfAccountTemplatesRow,
-      | "template_group"
+      | "template_set_id"
       | "code"
       | "name"
       | "type"
@@ -801,15 +999,57 @@ type ReceiptsInsert = Pick<
       "client_id" | "storage_path" | "mime" | "bytes" | "sha256"
     >
   >;
+type ProductsServicesInsert = Pick<
+  ProductsServicesRow,
+  "client_id" | "name"
+> &
+  Partial<Omit<ProductsServicesRow, "client_id" | "name" | "id">>;
+type InventoryMovementsInsert = Pick<
+  InventoryMovementsRow,
+  "product_id" | "client_id" | "movement_type" | "quantity"
+> &
+  Partial<
+    Omit<
+      InventoryMovementsRow,
+      "product_id" | "client_id" | "movement_type" | "quantity" | "id"
+    >
+  >;
 type EmployeesInsert = Pick<
   EmployeesRow,
   "client_id" | "full_name" | "monthly_rate"
 > &
   Partial<Omit<EmployeesRow, "client_id" | "full_name" | "monthly_rate">>;
+type AttendanceRecordsInsert = Pick<
+  AttendanceRecordsRow,
+  "payroll_run_id" | "employee_id" | "client_id"
+> &
+  Partial<
+    Omit<
+      AttendanceRecordsRow,
+      "payroll_run_id" | "employee_id" | "client_id" | "id"
+    >
+  >;
 type PayrollRunsInsert = Pick<PayrollRunsRow, "client_id" | "period"> &
   Partial<Omit<PayrollRunsRow, "client_id" | "period">>;
 type PaymentChannelsInsert = Pick<PaymentChannelsRow, "method" | "label"> &
   Partial<Omit<PaymentChannelsRow, "method" | "label" | "id">>;
+type ReceiptImagesInsert = Pick<
+  ReceiptImagesRow,
+  "receipt_id" | "storage_path" | "mime" | "bytes" | "sha256"
+> &
+  Partial<
+    Omit<
+      ReceiptImagesRow,
+      "receipt_id" | "storage_path" | "mime" | "bytes" | "sha256" | "id"
+    >
+  >;
+type ReceiptLineItemsInsert = Pick<
+  ReceiptLineItemsRow,
+  "receipt_id" | "description" | "amount"
+> &
+  Partial<
+    Omit<ReceiptLineItemsRow, "receipt_id" | "description" | "amount" | "id">
+  >;
 type ManualLedgerEntriesInsert = Pick<
   ManualLedgerEntriesRow,
   "client_id" | "entry_type" | "description" | "amount"
@@ -820,6 +1060,26 @@ type ManualLedgerEntriesInsert = Pick<
       "client_id" | "entry_type" | "description" | "amount" | "id"
     >
   >;
+type LedgerImportBatchesInsert = Pick<
+  LedgerImportBatchesRow,
+  "client_id" | "filename"
+> &
+  Partial<Omit<LedgerImportBatchesRow, "client_id" | "filename" | "id">>;
+type LedgerImportRowsInsert = Pick<
+  LedgerImportRowsRow,
+  "batch_id" | "row_number" | "entry_type" | "entry_date" | "description" | "amount"
+> &
+  Partial<
+    Omit<
+      LedgerImportRowsRow,
+      "batch_id" | "row_number" | "entry_type" | "entry_date" | "description" | "amount" | "id"
+    >
+  >;
+type ExtraRegistrationRequestsInsert = Pick<
+  ExtraRegistrationRequestsRow,
+  "client_id" | "label"
+> &
+  Partial<Omit<ExtraRegistrationRequestsRow, "client_id" | "label" | "id">>;
 type PayslipsInsert = Pick<
   PayslipsRow,
   "payroll_run_id" | "employee_id" | "client_id"
@@ -914,6 +1174,12 @@ export type Database = {
         PaymentsInsert,
         Partial<Omit<PaymentsRow, "id">>
       >;
+      tips: TableDef<TipsRow, TipsInsert, Partial<Omit<TipsRow, "id">>>;
+      invoice_letterhead: TableDef<
+        InvoiceLetterheadRow,
+        never,
+        Partial<Omit<InvoiceLetterheadRow, "id">>
+      >;
       engagement_letters: TableDef<
         EngagementLettersRow,
         EngagementLettersInsert,
@@ -931,6 +1197,11 @@ export type Database = {
         Partial<Omit<EmailTemplatesRow, "key">>
       >;
       audit_log: TableDef<AuditLogRow, never, never>;
+      chart_of_account_template_sets: TableDef<
+        ChartOfAccountTemplateSetsRow,
+        ChartOfAccountTemplateSetsInsert,
+        Partial<Omit<ChartOfAccountTemplateSetsRow, "id">>
+      >;
       chart_of_account_templates: TableDef<
         ChartOfAccountTemplatesRow,
         ChartOfAccountTemplatesInsert,
@@ -971,10 +1242,40 @@ export type Database = {
         ReceiptsInsert,
         Partial<Omit<ReceiptsRow, "id">>
       >;
+      receipt_images: TableDef<
+        ReceiptImagesRow,
+        ReceiptImagesInsert,
+        never
+      >;
+      receipt_line_items: TableDef<
+        ReceiptLineItemsRow,
+        ReceiptLineItemsInsert,
+        Partial<Omit<ReceiptLineItemsRow, "id">>
+      >;
+      products_services: TableDef<
+        ProductsServicesRow,
+        ProductsServicesInsert,
+        Partial<Omit<ProductsServicesRow, "id">>
+      >;
+      inventory_movements: TableDef<
+        InventoryMovementsRow,
+        InventoryMovementsInsert,
+        never
+      >;
       employees: TableDef<
         EmployeesRow,
         EmployeesInsert,
         Partial<Omit<EmployeesRow, "id">>
+      >;
+      payroll_standards: TableDef<
+        PayrollStandardsRow,
+        never,
+        Partial<Omit<PayrollStandardsRow, "id">>
+      >;
+      attendance_records: TableDef<
+        AttendanceRecordsRow,
+        AttendanceRecordsInsert,
+        Partial<Omit<AttendanceRecordsRow, "id">>
       >;
       payroll_runs: TableDef<
         PayrollRunsRow,
@@ -995,6 +1296,21 @@ export type Database = {
         ManualLedgerEntriesRow,
         ManualLedgerEntriesInsert,
         Partial<Omit<ManualLedgerEntriesRow, "id">>
+      >;
+      ledger_import_batches: TableDef<
+        LedgerImportBatchesRow,
+        LedgerImportBatchesInsert,
+        Partial<Omit<LedgerImportBatchesRow, "id">>
+      >;
+      ledger_import_rows: TableDef<
+        LedgerImportRowsRow,
+        LedgerImportRowsInsert,
+        Partial<Omit<LedgerImportRowsRow, "id">>
+      >;
+      extra_registration_requests: TableDef<
+        ExtraRegistrationRequestsRow,
+        ExtraRegistrationRequestsInsert,
+        Partial<Omit<ExtraRegistrationRequestsRow, "id">>
       >;
     };
     Views: Record<string, never>;
@@ -1030,8 +1346,16 @@ export type Database = {
         Returns: PaymentsRow;
       };
       create_default_chart_of_accounts: {
-        Args: { p_client_id: string };
+        Args: { p_client_id: string; p_template_set_id?: string | null };
         Returns: ChartOfAccountsRow[];
+      };
+      duplicate_chart_of_account_template_set: {
+        Args: { p_set_id: string; p_name: string };
+        Returns: ChartOfAccountTemplateSetsRow;
+      };
+      set_chart_of_account_template_set_defaults: {
+        Args: { p_set_id: string; p_entity_types: EntityType[] };
+        Returns: ChartOfAccountTemplateSetsRow;
       };
       reverse_journal_entry: {
         Args: { p_entry_id: string; p_memo?: string | null };
@@ -1056,7 +1380,7 @@ export type Database = {
       approve_receipt: {
         Args: {
           p_receipt_id: string;
-          p_debit_account_id: string;
+          p_debit_account_id: string | null;
           p_credit_account_id: string;
         };
         Returns: ReceiptsRow;
@@ -1092,6 +1416,18 @@ export type Database = {
         Args: { p_job_type: JobType };
         Returns: RegistrationJobsRow;
       };
+      commit_ledger_import_batch: {
+        Args: { p_batch_id: string };
+        Returns: LedgerImportBatchesRow;
+      };
+      reject_ledger_import_batch: {
+        Args: { p_batch_id: string };
+        Returns: LedgerImportBatchesRow;
+      };
+      set_ledger_import_row_status: {
+        Args: { p_row_id: string; p_status: LedgerImportRowStatus };
+        Returns: LedgerImportRowsRow;
+      };
       self_register_business: {
         Args: {
           p_business_name: string;
@@ -1101,6 +1437,47 @@ export type Database = {
           p_cycle: SubscriptionCycle;
         };
         Returns: ClientsRow;
+      };
+      quote_extra_registration_request: {
+        Args: { p_id: string; p_fee: number; p_note: string | null };
+        Returns: ExtraRegistrationRequestsRow;
+      };
+      decline_extra_registration_request: {
+        Args: { p_id: string; p_note: string | null };
+        Returns: ExtraRegistrationRequestsRow;
+      };
+      respond_extra_registration_request: {
+        Args: { p_id: string; p_accept: boolean };
+        Returns: ExtraRegistrationRequestsRow;
+      };
+      confirm_tip: {
+        Args: { p_tip_id: string };
+        Returns: TipsRow;
+      };
+      reject_tip: {
+        Args: { p_tip_id: string };
+        Returns: TipsRow;
+      };
+      issue_invoice_after_proof_review: {
+        Args: { p_invoice_id: string };
+        Returns: InvoicesRow;
+      };
+      mark_extra_fee_shouldered: {
+        Args: { p_fee_id: string };
+        Returns: GovernmentFeesRow;
+      };
+      settle_extra_fee: {
+        Args: { p_fee_id: string; p_receipt_document_id?: string | null };
+        Returns: GovernmentFeesRow;
+      };
+      record_inventory_movement: {
+        Args: {
+          p_product_id: string;
+          p_movement_type: InventoryMovementType;
+          p_quantity: number;
+          p_note: string | null;
+        };
+        Returns: ProductsServicesRow;
       };
     };
     Enums: {
@@ -1133,6 +1510,14 @@ export type Database = {
       employee_status: EmployeeStatus;
       payroll_run_status: PayrollRunStatus;
       report_entry_type: ReportEntryType;
+      ledger_import_status: LedgerImportStatus;
+      ledger_import_row_status: LedgerImportRowStatus;
+      extra_registration_status: ExtraRegistrationStatus;
+      product_kind: ProductKind;
+      inventory_movement_type: InventoryMovementType;
+      pay_type: PayType;
+      tip_status: TipStatus;
+      extra_fee_status: ExtraFeeStatus;
     };
   };
 };

@@ -14,16 +14,28 @@ export default async function ClientAccountingPage({
   const { id } = await params;
 
   const supabase = await createClient();
-  const [{ data: client }, { data: accounts }] = await Promise.all([
-    supabase.from("clients").select("id").eq("id", id).single(),
-    supabase
-      .from("chart_of_accounts")
-      .select("*")
-      .eq("client_id", id)
-      .order("code"),
-  ]);
+  const [{ data: client }, { data: accounts }, { data: templateSets }] =
+    await Promise.all([
+      supabase.from("clients").select("id").eq("id", id).single(),
+      supabase
+        .from("chart_of_accounts")
+        .select("*")
+        .eq("client_id", id)
+        .order("code"),
+      supabase
+        .from("chart_of_account_template_sets")
+        .select("id, name, is_builtin")
+        .order("is_builtin", { ascending: false })
+        .order("name"),
+    ]);
 
   if (!client) notFound();
 
-  return <ChartOfAccountsPanel clientId={id} accounts={accounts ?? []} />;
+  return (
+    <ChartOfAccountsPanel
+      clientId={id}
+      accounts={accounts ?? []}
+      templateSets={templateSets ?? []}
+    />
+  );
 }

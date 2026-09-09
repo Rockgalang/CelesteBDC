@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 
 import { ReportsTable } from "@/app/(app)/reports/reports-table";
+import {
+  LedgerImportPanel,
+  type ImportBatchWithRows,
+} from "@/app/(app)/reports/ledger-import-panel";
 import { getCurrentProfile } from "@/lib/auth/current-profile";
 import { createClient } from "@/lib/supabase/server";
 import type { LedgerRow } from "@/app/(app)/reports/types";
@@ -20,18 +24,27 @@ export default async function ReportsPage() {
   }
 
   const supabase = await createClient();
-  const [{ data: receipts }, { data: manualEntries }] = await Promise.all([
-    supabase
-      .from("receipts")
-      .select("id, entry_type, vendor_name, receipt_date, amount, category, status, created_at")
-      .eq("client_id", profile.client_id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("manual_ledger_entries")
-      .select("*")
-      .eq("client_id", profile.client_id)
-      .order("entry_date", { ascending: false }),
-  ]);
+  const [{ data: receipts }, { data: manualEntries }, { data: importBatches }] =
+    await Promise.all([
+      supabase
+        .from("receipts")
+        .select("id, entry_type, vendor_name, receipt_date, amount, category, status, created_at")
+        .eq("client_id", profile.client_id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("manual_ledger_entries")
+        .select("*")
+        .eq("client_id", profile.client_id)
+        .order("entry_date", { ascending: false }),
+      supabase
+        .from("ledger_import_batches")
+        .select("*, rows:ledger_import_rows(*)")
+        .eq("client_id", profile.client_id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false }),
+    ]);
+
+  const batches = (importBatches ?? []) as unknown as ImportBatchWithRows[];
 
   const rows: LedgerRow[] = [
     ...(receipts ?? []).map((r) => ({
@@ -68,7 +81,12 @@ export default async function ReportsPage() {
           register. Export to CSV any time.
         </p>
       </div>
-      <ReportsTable rows={rows} />
+      <ReportsTable rows={rows} clientId={profile.client_id} />
+      <LedgerImportPanel
+        clientId={profile.client_id}
+        canCommit={false}
+        batches={batches}
+      />
     </div>
   );
 }

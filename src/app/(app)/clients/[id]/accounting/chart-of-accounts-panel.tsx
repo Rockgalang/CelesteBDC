@@ -36,19 +36,25 @@ import {
   createAccountSchema,
   type CreateAccountInput,
 } from "@/lib/validation/accounting";
-import type { ChartOfAccountsRow } from "@/lib/supabase/types";
+import type {
+  ChartOfAccountsRow,
+  ChartOfAccountTemplateSetsRow,
+} from "@/lib/supabase/types";
 
 export function ChartOfAccountsPanel({
   clientId,
   accounts,
+  templateSets,
 }: {
   clientId: string;
   accounts: ChartOfAccountsRow[];
+  templateSets: Pick<ChartOfAccountTemplateSetsRow, "id" | "name" | "is_builtin">[];
 }) {
   const [isSeeding, startSeed] = useTransition();
   const [isTogglingId, setIsTogglingId] = useState<string | null>(null);
   const [isToggling, startToggle] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [templateSetId, setTemplateSetId] = useState<string>("");
 
   const {
     register,
@@ -65,7 +71,7 @@ export function ChartOfAccountsPanel({
   const onSeed = () => {
     setError(null);
     startSeed(async () => {
-      const result = await seedChartOfAccountsAction(clientId);
+      const result = await seedChartOfAccountsAction(clientId, templateSetId || undefined);
       if (!result.ok) setError(result.error);
     });
   };
@@ -105,13 +111,31 @@ export function ChartOfAccountsPanel({
         {accounts.length === 0 ? (
           <div className="space-y-3">
             <p className="text-muted-foreground text-sm">
-              No accounts yet. Seed the default chart of accounts for this
-              client&apos;s entity type, then customize as needed. Verify
+              No accounts yet. Seed a chart of accounts from an Accounting
+              Standards template (defaults to the one set for this
+              client&apos;s entity type), then customize as needed. Verify
               against a CPA-reviewed chart before relying on it operationally.
             </p>
-            <Button size="sm" disabled={isSeeding} onClick={onSeed}>
-              {isSeeding ? "Seeding..." : "Seed default chart of accounts"}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              {templateSets.length > 0 && (
+                <Select value={templateSetId} onValueChange={setTemplateSetId}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Use entity type default" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templateSets.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                        {s.is_builtin ? "" : " (custom)"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Button size="sm" disabled={isSeeding} onClick={onSeed}>
+                {isSeeding ? "Seeding..." : "Seed chart of accounts"}
+              </Button>
+            </div>
           </div>
         ) : (
           <Table>

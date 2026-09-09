@@ -103,6 +103,7 @@ export async function updateClientAction(
 
   revalidatePath("/clients");
   revalidatePath(`/clients/${clientId}`);
+  revalidatePath(`/clients/${clientId}/profile`);
   return { ok: true };
 }
 
@@ -134,5 +135,6 @@ export async function createContactAction(
   }
 
   revalidatePath(`/clients/${parsed.data.clientId}`);
+  revalidatePath(`/clients/${parsed.data.clientId}/profile`);
   return { ok: true };
 }

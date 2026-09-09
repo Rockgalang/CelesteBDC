@@ -10,9 +10,9 @@ export default async function AccountingLayout({
   const { id } = await params;
 
   const tabs = [
+    { href: `/clients/${id}/accounting/financials`, label: "Statements" },
+    { href: `/clients/${id}/accounting/bank`, label: "Banks" },
     { href: `/clients/${id}/accounting`, label: "Chart of accounts", exact: true },
-    { href: `/clients/${id}/accounting/bank`, label: "Bank" },
-    { href: `/clients/${id}/accounting/financials`, label: "Financials" },
   ];
 
   return (

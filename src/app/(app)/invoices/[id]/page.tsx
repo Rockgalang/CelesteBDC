@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { InvoiceStatusBadge } from "@/app/(app)/invoices/invoice-status-badge";
+import { InvoiceLetterheadHeader } from "@/app/(app)/invoices/invoice-letterhead-header";
+import { IssueInvoiceButton } from "@/app/(app)/invoices/[id]/issue-invoice-button";
 import { PaymentPanel } from "@/app/(app)/invoices/[id]/payment-panel";
 import {
   Card,
@@ -36,7 +38,7 @@ export default async function InvoiceDetailPage({
   const { id } = await params;
 
   const supabase = await createClient();
-  const [{ data: invoice }, { data: lines }, { data: payments }, { data: channels }] =
+  const [{ data: invoice }, { data: lines }, { data: payments }, { data: channels }, { data: letterhead }] =
     await Promise.all([
       supabase
         .from("invoices")
@@ -54,6 +56,7 @@ export default async function InvoiceDetailPage({
         .eq("invoice_id", id)
         .order("created_at"),
       supabase.from("payment_channels").select("*").eq("active", true),
+      supabase.from("invoice_letterhead").select("*").eq("id", 1).maybeSingle(),
     ]);
 
   if (!invoice) notFound();
@@ -66,6 +69,7 @@ export default async function InvoiceDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <InvoiceLetterheadHeader letterhead={letterhead ?? null} />
       <div>
         {internal && client ? (
           <ClientBackLink clientId={client.id} businessName={client.business_name} />
@@ -82,6 +86,15 @@ export default async function InvoiceDetailPage({
           Issued {formatManila(invoice.issue_date)} · Due{" "}
           {formatManila(invoice.due_date)}
         </p>
+        {internal && invoice.status === "draft" && (
+          <div className="mt-3 space-y-2 rounded-md border border-dashed p-3">
+            <p className="text-muted-foreground text-sm">
+              This is an extra-charge draft — attach the client&apos;s proof
+              of payment below, then issue it.
+            </p>
+            <IssueInvoiceButton invoiceId={invoice.id} />
+          </div>
+        )}
       </div>
 
       <Card>

@@ -84,7 +84,7 @@ export default async function RegistrationJobPage({
       </Card>
 
       <ChecklistPanel jobId={job.id} items={checklist ?? []} />
-      <FeesPanel jobId={job.id} fees={fees ?? []} />
+      <FeesPanel jobId={job.id} clientId={client?.id ?? job.client_id} fees={fees ?? []} />
     </div>
   );
 }
