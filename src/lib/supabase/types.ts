@@ -248,6 +248,8 @@ export type JobChecklistItemsRow = {
   created_by: string | null;
 };
 
+export type ExtraFeeStatus = "pending" | "shouldered" | "settled";
+
 export type GovernmentFeesRow = {
   id: string;
   job_id: string;
@@ -257,6 +259,9 @@ export type GovernmentFeesRow = {
   handling_fee: string;
   receipt_document_id: string | null;
   billed_invoice_id: string | null;
+  status: ExtraFeeStatus;
+  settled_at: string | null;
+  settled_by: string | null;
   created_at: string;
   updated_at: string;
   created_by: string | null;
@@ -1406,6 +1411,14 @@ export type Database = {
         Args: { p_invoice_id: string };
         Returns: InvoicesRow;
       };
+      mark_extra_fee_shouldered: {
+        Args: { p_fee_id: string };
+        Returns: GovernmentFeesRow;
+      };
+      settle_extra_fee: {
+        Args: { p_fee_id: string; p_receipt_document_id?: string | null };
+        Returns: GovernmentFeesRow;
+      };
       record_inventory_movement: {
         Args: {
           p_product_id: string;
@@ -1453,6 +1466,7 @@ export type Database = {
       inventory_movement_type: InventoryMovementType;
       pay_type: PayType;
       tip_status: TipStatus;
+      extra_fee_status: ExtraFeeStatus;
     };
   };
 };

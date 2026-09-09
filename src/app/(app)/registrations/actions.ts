@@ -11,6 +11,14 @@ import {
   type CreateJobInput,
   type GovernmentFeeInput,
 } from "@/lib/validation/registration";
+import type { JobStatus } from "@/lib/supabase/types";
+
+const BOARD_STATUSES: JobStatus[] = [
+  "not_started",
+  "in_progress",
+  "blocked",
+  "completed",
+];
 
 export async function createJobAction(
   input: CreateJobInput,
@@ -113,5 +121,76 @@ export async function addGovernmentFeeAction(
   }
 
   revalidatePath(`/registrations/${parsed.data.jobId}`);
+  return { ok: true };
+}
+
+/** Drag-and-drop Kanban move — a plain status update (owner/staff have
+ * full write access to registration_jobs via RLS). Moving a card to
+ * "Completed" is blocked at the database level
+ * (guard_job_completion_requires_settled_fees) while the job has any
+ * unsettled extra fee, so that failure surfaces here as a normal error
+ * rather than a silent no-op. */
+export async function updateJobStatusAction(
+  jobId: string,
+  status: JobStatus,
+): Promise<ActionResult> {
+  await requireRole("owner", "staff");
+
+  if (!BOARD_STATUSES.includes(status)) {
+    return { ok: false, error: "Invalid status." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("registration_jobs")
+    .update({ status })
+    .eq("id", jobId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/registrations");
+  revalidatePath(`/registrations/${jobId}`);
+  return { ok: true };
+}
+
+export async function markFeeShoulderedAction(
+  feeId: string,
+  jobId: string,
+): Promise<ActionResult> {
+  await requireRole("owner", "staff");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("mark_extra_fee_shouldered", {
+    p_fee_id: feeId,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/registrations/${jobId}`);
+  return { ok: true };
+}
+
+export async function settleFeeAction(
+  feeId: string,
+  jobId: string,
+  receiptDocumentId?: string,
+): Promise<ActionResult> {
+  await requireRole("owner", "staff");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("settle_extra_fee", {
+    p_fee_id: feeId,
+    p_receipt_document_id: receiptDocumentId || null,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/registrations/${jobId}`);
   return { ok: true };
 }
