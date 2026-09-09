@@ -586,6 +586,30 @@ export type ReceiptsRow = {
   created_by: string | null;
 };
 
+export type ReceiptImagesRow = {
+  id: string;
+  receipt_id: string;
+  storage_path: string;
+  mime: string;
+  bytes: number;
+  sha256: string;
+  sequence: number;
+  created_at: string;
+  created_by: string | null;
+};
+
+export type ReceiptLineItemsRow = {
+  id: string;
+  receipt_id: string;
+  description: string;
+  amount: string;
+  category: string | null;
+  account_id: string | null;
+  sequence: number;
+  created_at: string;
+  created_by: string | null;
+};
+
 export type ManualLedgerEntriesRow = {
   id: string;
   client_id: string;
@@ -1009,6 +1033,23 @@ type PayrollRunsInsert = Pick<PayrollRunsRow, "client_id" | "period"> &
   Partial<Omit<PayrollRunsRow, "client_id" | "period">>;
 type PaymentChannelsInsert = Pick<PaymentChannelsRow, "method" | "label"> &
   Partial<Omit<PaymentChannelsRow, "method" | "label" | "id">>;
+type ReceiptImagesInsert = Pick<
+  ReceiptImagesRow,
+  "receipt_id" | "storage_path" | "mime" | "bytes" | "sha256"
+> &
+  Partial<
+    Omit<
+      ReceiptImagesRow,
+      "receipt_id" | "storage_path" | "mime" | "bytes" | "sha256" | "id"
+    >
+  >;
+type ReceiptLineItemsInsert = Pick<
+  ReceiptLineItemsRow,
+  "receipt_id" | "description" | "amount"
+> &
+  Partial<
+    Omit<ReceiptLineItemsRow, "receipt_id" | "description" | "amount" | "id">
+  >;
 type ManualLedgerEntriesInsert = Pick<
   ManualLedgerEntriesRow,
   "client_id" | "entry_type" | "description" | "amount"
@@ -1201,6 +1242,16 @@ export type Database = {
         ReceiptsInsert,
         Partial<Omit<ReceiptsRow, "id">>
       >;
+      receipt_images: TableDef<
+        ReceiptImagesRow,
+        ReceiptImagesInsert,
+        never
+      >;
+      receipt_line_items: TableDef<
+        ReceiptLineItemsRow,
+        ReceiptLineItemsInsert,
+        Partial<Omit<ReceiptLineItemsRow, "id">>
+      >;
       products_services: TableDef<
         ProductsServicesRow,
         ProductsServicesInsert,
@@ -1329,7 +1380,7 @@ export type Database = {
       approve_receipt: {
         Args: {
           p_receipt_id: string;
-          p_debit_account_id: string;
+          p_debit_account_id: string | null;
           p_credit_account_id: string;
         };
         Returns: ReceiptsRow;

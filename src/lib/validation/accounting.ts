@@ -82,7 +82,7 @@ export type UpdateReceiptFieldsInput = z.infer<
 
 export const approveReceiptSchema = z.object({
   receiptId: z.string().uuid(),
-  debitAccountId: z.string().uuid(),
+  debitAccountId: z.string().uuid().optional(),
   creditAccountId: z.string().uuid(),
 });
 export type ApproveReceiptInput = z.infer<typeof approveReceiptSchema>;
@@ -92,3 +92,19 @@ export const rejectReceiptSchema = z.object({
   reason: z.string().trim().min(1, "A reason is required."),
 });
 export type RejectReceiptInput = z.infer<typeof rejectReceiptSchema>;
+
+export const addReceiptLineItemSchema = z.object({
+  receiptId: z.string().uuid(),
+  description: z.string().trim().min(1, "Description is required."),
+  amount: z.coerce.number().positive(),
+  category: z.string().trim().optional(),
+  accountId: z.string().uuid().optional(),
+});
+export type AddReceiptLineItemInput = z.infer<typeof addReceiptLineItemSchema>;
+
+export const receiptLineItemCsvRowSchema = z.object({
+  description: z.string().min(1),
+  amount: z.coerce.number().positive(),
+  category: z.string().optional(),
+});
+export type ReceiptLineItemCsvRow = z.infer<typeof receiptLineItemCsvRowSchema>;

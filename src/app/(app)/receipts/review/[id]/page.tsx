@@ -30,21 +30,32 @@ export default async function ReceiptReviewDetailPage({
     business_name: string;
   } | null;
 
-  const [{ data: accounts }, { data: duplicateOf }] = await Promise.all([
-    supabase
-      .from("chart_of_accounts")
-      .select("*")
-      .eq("client_id", receipt.client_id)
-      .eq("active", true)
-      .order("code"),
-    receipt.possible_duplicate_of
-      ? supabase
-          .from("receipts")
-          .select("id, vendor_name")
-          .eq("id", receipt.possible_duplicate_of)
-          .single()
-      : Promise.resolve({ data: null }),
-  ]);
+  const [{ data: accounts }, { data: duplicateOf }, { data: images }, { data: lineItems }] =
+    await Promise.all([
+      supabase
+        .from("chart_of_accounts")
+        .select("*")
+        .eq("client_id", receipt.client_id)
+        .eq("active", true)
+        .order("code"),
+      receipt.possible_duplicate_of
+        ? supabase
+            .from("receipts")
+            .select("id, vendor_name")
+            .eq("id", receipt.possible_duplicate_of)
+            .single()
+        : Promise.resolve({ data: null }),
+      supabase
+        .from("receipt_images")
+        .select("*")
+        .eq("receipt_id", id)
+        .order("sequence"),
+      supabase
+        .from("receipt_line_items")
+        .select("*")
+        .eq("receipt_id", id)
+        .order("sequence"),
+    ]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -61,6 +72,8 @@ export default async function ReceiptReviewDetailPage({
         receipt={receipt}
         accounts={accounts ?? []}
         duplicateOf={duplicateOf}
+        images={images ?? []}
+        lineItems={lineItems ?? []}
       />
     </div>
   );

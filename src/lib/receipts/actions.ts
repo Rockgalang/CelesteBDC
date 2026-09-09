@@ -137,6 +137,86 @@ export async function getSignedReceiptUrlAction(
   return { ok: true, url: data.signedUrl };
 }
 
+/** Adds an extra photo to an existing receipt — the first photo still
+ * goes through uploadReceiptAction (it's what triggers OCR); every photo
+ * after that lands here instead, for the common "one receipt, several
+ * pages/angles" case. */
+export async function uploadReceiptImageAction(
+  receiptId: string,
+  clientId: string,
+  formData: FormData,
+): Promise<ActionResult & { imageId?: string }> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Choose a photo to upload." };
+  }
+  if (file.size > MAX_RECEIPT_UPLOAD_BYTES) {
+    return { ok: false, error: "File is larger than 15MB." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const sha256 = createHash("sha256").update(bytes).digest("hex");
+  const mime = file.type || "application/octet-stream";
+  const storagePath = `${clientId}/${randomUUID()}-${file.name}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .upload(storagePath, bytes, { contentType: mime });
+  if (uploadError) {
+    return { ok: false, error: `Upload failed: ${uploadError.message}` };
+  }
+
+  const { count: existingCount } = await supabase
+    .from("receipt_images")
+    .select("id", { count: "exact", head: true })
+    .eq("receipt_id", receiptId);
+
+  const { data: image, error: insertError } = await supabase
+    .from("receipt_images")
+    .insert({
+      receipt_id: receiptId,
+      storage_path: storagePath,
+      mime,
+      bytes: file.size,
+      sha256,
+      sequence: (existingCount ?? 0) + 2, // +2: the receipt's own photo is sequence 1
+      created_by: user?.id ?? null,
+    })
+    .select("id")
+    .single();
+  if (insertError || !image) {
+    await supabase.storage.from(BUCKET).remove([storagePath]);
+    return {
+      ok: false,
+      error: `Could not save photo: ${insertError?.message ?? "unknown error"}`,
+    };
+  }
+
+  revalidatePath("/receipts");
+  revalidatePath("/receipts/review");
+  return { ok: true, imageId: image.id };
+}
+
+export async function getSignedReceiptImageUrlAction(
+  storagePath: string,
+): Promise<ActionResult & { url?: string }> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS);
+  if (error || !data) {
+    return { ok: false, error: "Could not generate a link for this file." };
+  }
+
+  return { ok: true, url: data.signedUrl };
+}
+
 export async function reprocessReceiptOcrAction(
   receiptId: string,
 ): Promise<ActionResult> {
